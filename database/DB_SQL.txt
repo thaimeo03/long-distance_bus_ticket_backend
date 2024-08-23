@@ -1,0 +1,105 @@
+CREATE TABLE "Users" (
+	"id" UUID NOT NULL,
+	"phone_number" VARCHAR,
+	"sex" SMALLINT,
+	"date_of_birth" DATE,
+	"email" VARCHAR UNIQUE,
+	"role" SMALLINT,
+	PRIMARY KEY("id")
+);
+
+
+CREATE TABLE "Bus_Companies" (
+	"id" UUID NOT NULL UNIQUE,
+	"name" VARCHAR,
+	"main_image" TEXT,
+	PRIMARY KEY("id")
+);
+
+
+CREATE TABLE "Buses" (
+	"id" UUID NOT NULL UNIQUE,
+	"bus_number" VARCHAR UNIQUE,
+	"name" VARCHAR,
+	"status" BOOLEAN,
+	"main_image" TEXT,
+	"bus_company_id" UUID NOT NULL UNIQUE,
+	"route_id" UUID,
+	PRIMARY KEY("id")
+);
+
+
+CREATE TABLE "Schedules" (
+	"id" UUID NOT NULL UNIQUE,
+	"name" VARCHAR,
+	"position_point" BOOLEAN,
+	"arrival_time" TIMESTAMP,
+	"distance_from_start_km" INTEGER,
+	"route_id" UUID NOT NULL UNIQUE,
+	PRIMARY KEY("id")
+);
+
+
+CREATE TABLE "Routes" (
+	"id" UUID NOT NULL UNIQUE,
+	"start_location" VARCHAR,
+	"end_location" VARCHAR,
+	"distance_km" INTEGER,
+	"duration_hours" INTEGER,
+	"bus_id" UUID,
+	PRIMARY KEY("id")
+);
+
+
+CREATE TABLE "Bookings" (
+	"id" UUID NOT NULL UNIQUE,
+	"payment_status" BOOLEAN,
+	"booking_status" BOOLEAN,
+	"quantity" INTEGER,
+	"user_id" UUID NOT NULL UNIQUE,
+	"schedule_id" UUID NOT NULL UNIQUE,
+	"booking_date" DATE,
+	PRIMARY KEY("id")
+);
+
+
+CREATE TABLE "Payments" (
+	"id" UUID NOT NULL UNIQUE,
+	"method" SMALLINT,
+	"amout" BIGINT,
+	"payment_date" DATE,
+	"booking_id" UUID NOT NULL UNIQUE,
+	PRIMARY KEY("id")
+);
+
+
+CREATE TABLE "Seats" (
+	"id" UUID NOT NULL UNIQUE,
+	"seat_number" SMALLINT UNIQUE,
+	"is_available" BOOLEAN,
+	"bus_id" UUID,
+	PRIMARY KEY("id")
+);
+
+
+ALTER TABLE "Bus_Companies"
+ADD FOREIGN KEY("id") REFERENCES "Buses"("bus_company_id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "Routes"
+ADD FOREIGN KEY("id") REFERENCES "Schedules"("route_id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "Users"
+ADD FOREIGN KEY("id") REFERENCES "Bookings"("user_id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "Schedules"
+ADD FOREIGN KEY("id") REFERENCES "Bookings"("schedule_id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "Bookings"
+ADD FOREIGN KEY("id") REFERENCES "Payments"("booking_id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "Buses"
+ADD FOREIGN KEY("id") REFERENCES "Seats"("bus_id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "Buses"
+ADD FOREIGN KEY("route_id") REFERENCES "Routes"("bus_id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
