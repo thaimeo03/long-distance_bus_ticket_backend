@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { dataSourceOptions } from '../database/data-source'
+import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
   imports: [
@@ -11,7 +12,8 @@ import { dataSourceOptions } from '../database/data-source'
       isGlobal: true,
       envFilePath: ['.env.local', '.env']
     }),
-    TypeOrmModule.forRoot(dataSourceOptions)
+    TypeOrmModule.forRoot(dataSourceOptions),
+    SchedulesModule
   ],
   controllers: [AppController],
   providers: [AppService]
