@@ -1,18 +1,17 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm'
+import { TypeOrmModule } from '@nestjs/typeorm'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { dataSourceOptions } from '../database/data-source'
-import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env']
     }),
-    TypeOrmModule.forRoot(dataSourceOptions),
-    ScheduleModule.forRoot()
+    TypeOrmModule.forRoot(dataSourceOptions)
   ],
   controllers: [AppController],
   providers: [AppService]

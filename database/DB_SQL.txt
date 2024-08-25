@@ -2,12 +2,14 @@ CREATE TABLE "Users" (
 	"id" UUID NOT NULL,
 	"phone_number" VARCHAR,
 	"sex" SMALLINT,
-	"date_of_birth" DATE,
+	"age": SMALLINT,
 	"email" VARCHAR UNIQUE,
+	"password_hashed" VARCHAR,
+	"refreshToken" TEXT,
+	"date_of_birth" DATE,
 	"role" SMALLINT,
 	PRIMARY KEY("id")
 );
-
 
 CREATE TABLE "Bus_Companies" (
 	"id" UUID NOT NULL UNIQUE,
@@ -16,29 +18,16 @@ CREATE TABLE "Bus_Companies" (
 	PRIMARY KEY("id")
 );
 
-
 CREATE TABLE "Buses" (
 	"id" UUID NOT NULL UNIQUE,
 	"bus_number" VARCHAR UNIQUE,
 	"name" VARCHAR,
 	"status" BOOLEAN,
 	"main_image" TEXT,
-	"bus_company_id" UUID NOT NULL UNIQUE,
-	"route_id" UUID,
-	PRIMARY KEY("id")
+	"bus_company_id" UUID NOT NULL,
+	PRIMARY KEY("id"),
+	FOREIGN KEY("bus_company_id") REFERENCES "Bus_Companies"("id")
 );
-
-
-CREATE TABLE "Schedules" (
-	"id" UUID NOT NULL UNIQUE,
-	"name" VARCHAR,
-	"position_point" BOOLEAN,
-	"arrival_time" TIMESTAMP,
-	"distance_from_start_km" INTEGER,
-	"route_id" UUID NOT NULL UNIQUE,
-	PRIMARY KEY("id")
-);
-
 
 CREATE TABLE "Routes" (
 	"id" UUID NOT NULL UNIQUE,
@@ -46,60 +35,117 @@ CREATE TABLE "Routes" (
 	"end_location" VARCHAR,
 	"distance_km" INTEGER,
 	"duration_hours" INTEGER,
-	"bus_id" UUID,
 	PRIMARY KEY("id")
 );
 
+CREATE TABLE "Route_Stops" (
+	"id" UUID NOT NULL UNIQUE,
+	"route_id" UUID NOT NULL,
+	"location" VARCHAR,
+	"arrival_time" TIMESTAMP,
+	"distance_from_start_km" INTEGER,
+	PRIMARY KEY("id"),
+	FOREIGN KEY("route_id") REFERENCES "Routes"("id")
+);
+
+CREATE TABLE "Schedules" (
+	"id" UUID NOT NULL UNIQUE,
+	"bus_id" UUID NOT NULL,
+	"route_stop_id" UUID NOT NULL,
+	"departure_time" TIMESTAMP,
+	PRIMARY KEY("id"),
+	FOREIGN KEY("bus_id") REFERENCES "Buses"("id"),
+	FOREIGN KEY("route_stop_id") REFERENCES "Route_Stops"("id")
+);
 
 CREATE TABLE "Bookings" (
 	"id" UUID NOT NULL UNIQUE,
-	"payment_status" BOOLEAN,
 	"booking_status" BOOLEAN,
 	"quantity" INTEGER,
-	"user_id" UUID NOT NULL UNIQUE,
-	"schedule_id" UUID NOT NULL UNIQUE,
+	"user_id" UUID NOT NULL,
+	"schedule_id" UUID NOT NULL,
+	"pickup_stop_id" UUID NOT NULL,
+	"dropoff_stop_id" UUID NOT NULL,
 	"booking_date" DATE,
-	PRIMARY KEY("id")
+	PRIMARY KEY("id"),
+	FOREIGN KEY("user_id") REFERENCES "Users"("id"),
+	FOREIGN KEY("schedule_id") REFERENCES "Schedules"("id"),
+	FOREIGN KEY("pickup_stop_id") REFERENCES "Route_Stops"("id"),
+	FOREIGN KEY("dropoff_stop_id") REFERENCES "Route_Stops"("id")
 );
 
+CREATE TABLE "Prices" (
+	"id" UUID NOT NULL UNIQUE,
+	"route_id" UUID NOT NULL,
+	"start_stop_id" UUID NOT NULL,
+	"end_stop_id" UUID NOT NULL,
+	"price" BIGINT,
+	PRIMARY KEY("id"),
+	FOREIGN KEY("route_id") REFERENCES "Routes"("id"),
+	FOREIGN KEY("start_stop_id") REFERENCES "Route_Stops"("id"),
+	FOREIGN KEY("end_stop_id") REFERENCES "Route_Stops"("id")
+);
 
 CREATE TABLE "Payments" (
 	"id" UUID NOT NULL UNIQUE,
 	"method" SMALLINT,
-	"amout" BIGINT,
+	"payment_status" BOOLEAN,
+	"amount" BIGINT,
 	"payment_date" DATE,
-	"booking_id" UUID NOT NULL UNIQUE,
-	PRIMARY KEY("id")
+	"booking_id" UUID NOT NULL,
+	PRIMARY KEY("id"),
+	FOREIGN KEY("booking_id") REFERENCES "Bookings"("id")
 );
-
 
 CREATE TABLE "Seats" (
-	"id" UUID NOT NULL UNIQUE,
-	"seat_number" SMALLINT UNIQUE,
-	"is_available" BOOLEAN,
-	"bus_id" UUID,
-	PRIMARY KEY("id")
+    "id" UUID NOT NULL UNIQUE,
+    "seat_number" SMALLINT UNIQUE,
+    "is_available" BOOLEAN,
+    "bus_id" UUID NOT NULL,
+    "booking_id" UUID,
+    PRIMARY KEY("id"),
+    FOREIGN KEY("bus_id") REFERENCES "Buses"("id"),
+    FOREIGN KEY("booking_id") REFERENCES "Bookings"("id")
 );
 
+1. Users và Bookings (Quan hệ One-to-Many)
+Mô tả: Mỗi người dùng (User) có thể thực hiện nhiều lần đặt vé (Booking), nhưng một lần đặt vé chỉ thuộc về một người dùng duy nhất.
+Foreign Key: user_id trong bảng Bookings tham chiếu tới id trong bảng Users.
+Ví dụ: Một người dùng có thể đặt vé cho nhiều chuyến đi khác nhau.
+2. Bus_Companies và Buses (Quan hệ One-to-Many)
+Mô tả: Một công ty xe khách (Bus_Company) có thể sở hữu nhiều xe khách (Bus), nhưng mỗi xe khách chỉ thuộc về một công ty xe khách.
+Foreign Key: bus_company_id trong bảng Buses tham chiếu tới id trong bảng Bus_Companies.
+Ví dụ: Một công ty xe khách có thể quản lý nhiều xe khác nhau phục vụ cho các tuyến đường khác nhau.
+3. Routes và Route_Stops (Quan hệ One-to-Many)
+Mô tả: Mỗi tuyến đường (Route) có thể bao gồm nhiều điểm dừng (Route_Stop), nhưng mỗi điểm dừng chỉ thuộc về một tuyến đường.
+Foreign Key: route_id trong bảng Route_Stops tham chiếu tới id trong bảng Routes.
+Ví dụ: Tuyến đường từ Hà Nội đến Hải Phòng có thể có nhiều điểm dừng như Hải Dương, Hưng Yên, Hải Phòng.
+4. Routes và Prices (Quan hệ One-to-Many)
+Mô tả: Mỗi tuyến đường (Route) có thể có nhiều mức giá khác nhau, phụ thuộc vào các điểm dừng khởi hành và kết thúc. Mỗi mức giá chỉ liên quan đến một tuyến đường duy nhất.
+Foreign Key: route_id trong bảng Prices tham chiếu tới id trong bảng Routes.
+Ví dụ: Tuyến đường từ Hà Nội đến Hải Phòng có thể có giá khác nhau tùy thuộc vào điểm đón và điểm trả khách.
+5. Route_Stops và Schedules (Quan hệ One-to-Many)
+Mô tả: Một điểm dừng trên tuyến đường (Route_Stop) có thể xuất hiện trong nhiều lịch trình chạy xe (Schedule), nhưng mỗi lịch trình chỉ liên kết với một điểm dừng cụ thể.
+Foreign Key: route_stop_id trong bảng Schedules tham chiếu tới id trong bảng Route_Stops.
+Ví dụ: Một điểm dừng tại Hải Dương có thể xuất hiện trong lịch trình chạy xe khác nhau trong ngày.
+6. Buses và Schedules (Quan hệ One-to-Many)
+Mô tả: Một xe khách (Bus) có thể chạy nhiều lịch trình (Schedule) khác nhau, nhưng mỗi lịch trình chỉ liên kết với một xe khách.
+Foreign Key: bus_id trong bảng Schedules tham chiếu tới id trong bảng Buses.
+Ví dụ: Xe khách B001 có thể chạy lịch trình từ Hà Nội đến Hải Phòng vào buổi sáng và từ Hải Phòng về Hà Nội vào buổi chiều.
+7. Schedules và Bookings (Quan hệ One-to-Many)
+Mô tả: Một lịch trình chạy xe (Schedule) có thể có nhiều lần đặt vé (Booking), nhưng mỗi lần đặt vé chỉ liên quan đến một lịch trình cụ thể.
+Foreign Key: schedule_id trong bảng Bookings tham chiếu tới id trong bảng Schedules.
+Ví dụ: Lịch trình chạy xe từ Hà Nội đến Hải Phòng vào lúc 8:00 AM có thể có nhiều khách hàng đặt vé.
+8. Route_Stops và Bookings (Quan hệ One-to-Many cho cả điểm đón và điểm trả)
+Mô tả: Một điểm dừng (Route_Stop) có thể là điểm đón hoặc điểm trả trong nhiều lần đặt vé (Booking). Mỗi lần đặt vé chỉ liên quan đến một điểm đón và một điểm trả cụ thể.
+Foreign Key: pickup_stop_id và dropoff_stop_id trong bảng Bookings tham chiếu tới id trong bảng Route_Stops.
+Ví dụ: Một hành khách có thể đón tại Hà Nội và xuống tại Hải Phòng trong một lần đặt vé.
+9. Bookings và Payments (Quan hệ One-to-Many)
+Mô tả: Một lần đặt vé (Booking) có thể có nhiều giao dịch thanh toán (Payment), nhưng mỗi giao dịch chỉ liên quan đến một lần đặt vé.
+Foreign Key: booking_id trong bảng Payments tham chiếu tới id trong bảng Bookings.
+Ví dụ: Một khách hàng có thể thanh toán bằng thẻ tín dụng cho một phần và bằng ví điện tử cho phần còn lại của một lần đặt vé.
+10. Buses và Seats (Quan hệ One-to-Many)
+Mô tả: Một xe khách (Bus) có thể có nhiều ghế (Seat), nhưng mỗi ghế chỉ thuộc về một xe khách.
+Foreign Key: bus_id trong bảng Seats tham chiếu tới id trong bảng Buses.
+Ví dụ: Xe khách B001 có thể có 40 ghế, mỗi ghế có một số ghế cụ thể.
 
-ALTER TABLE "Bus_Companies"
-ADD FOREIGN KEY("id") REFERENCES "Buses"("bus_company_id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "Routes"
-ADD FOREIGN KEY("id") REFERENCES "Schedules"("route_id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "Users"
-ADD FOREIGN KEY("id") REFERENCES "Bookings"("user_id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "Schedules"
-ADD FOREIGN KEY("id") REFERENCES "Bookings"("schedule_id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "Bookings"
-ADD FOREIGN KEY("id") REFERENCES "Payments"("booking_id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "Buses"
-ADD FOREIGN KEY("id") REFERENCES "Seats"("bus_id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "Buses"
-ADD FOREIGN KEY("route_id") REFERENCES "Routes"("bus_id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;

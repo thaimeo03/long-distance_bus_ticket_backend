@@ -8,7 +8,7 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService)
   const { httpAdapter } = app.get(HttpAdapterHost)
-  const port = configService.get('PORT') || 3000
+  const port = configService.get('PORT') || 9999
 
   app.useGlobalPipes(new ValidationPipe()) // Validation pipe is global
   app.useGlobalFilters(new BaseExceptionFilter(httpAdapter)) // Exception filter is global
