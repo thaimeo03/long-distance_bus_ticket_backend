@@ -20,6 +20,9 @@ export class User {
   @Column()
   passwordHashed: string
 
+  @Column({ type: 'boolean', default: true })
+  isDraft: boolean
+
   @Column({ type: 'text', nullable: true })
   refreshToken: string
 

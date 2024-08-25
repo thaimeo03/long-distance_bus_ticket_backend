@@ -21,7 +21,7 @@ export class RouteStop {
   @OneToMany(() => Schedule, (schedule) => schedule.routeStop)
   schedules: Schedule[]
 
-  @ManyToOne(() => RouteStop, (routeStop) => routeStop.route)
+  @ManyToOne(() => Route, (route) => route.routeStops)
   route: Route
 
   @OneToMany(() => Booking, (booking) => booking.pickupStop)
