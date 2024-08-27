@@ -1,4 +1,4 @@
-import { Entity, JoinColumn, PrimaryGeneratedColumn, Column, OneToOne, ManyToOne, OneToMany } from 'typeorm'
+import { Entity, JoinColumn, PrimaryGeneratedColumn, Column, OneToOne, ManyToOne, ManyToMany, JoinTable } from 'typeorm'
 import { User } from 'src/users/entities/user.entity'
 import { Schedule } from 'src/schedules/entities/schedule.entity'
 import { Payment } from 'src/payments/entities/payment.entity'
@@ -25,7 +25,8 @@ export class Booking {
   @ManyToOne(() => Schedule, (schedule) => schedule.bookings)
   schedule: Schedule
 
-  @OneToMany(() => Seat, (seat) => seat.booking)
+  @ManyToMany(() => Seat)
+  @JoinTable()
   seats: Seat[]
 
   @OneToOne(() => Payment, (payment) => payment.booking)
