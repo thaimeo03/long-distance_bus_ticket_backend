@@ -24,7 +24,6 @@
     "migration:create": "npm run typeorm:ts-node migration:create"
   },
   "dependencies": {
-    "@faker-js/faker": "^8.4.1",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.0.0",
@@ -40,6 +39,7 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
