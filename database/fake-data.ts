@@ -8,6 +8,7 @@ import { fakerVI } from '@faker-js/faker'
 import { BusCompany } from 'src/bus-companies/entities/bus-company.entity'
 import { Bus } from 'src/buses/entities/bus.entity'
 import { Seat } from 'src/seats/entities/seat.entity'
+import { BusStatus } from 'common/enums/buses.enum'
 
 @Injectable()
 export class DataService {
@@ -193,6 +194,7 @@ export class DataService {
           this.busRepository.create({
             busNumber: fakerVI.vehicle.vrm(),
             name: 'Xe khách ' + fakerVI.word.noun(),
+            status: count % 5 === 0 ? BusStatus.EnRoute : BusStatus.Ready,
             mainImage: fakerVI.image.url(),
             busCompany: company
           })
