@@ -7,10 +7,10 @@ export class Seat {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'smallint', unique: true })
+  @Column({ type: 'smallint' })
   seatNumber: number
 
-  @Column({ type: 'boolean', nullable: true })
+  @Column({ type: 'boolean', default: true })
   isAvailable: boolean
 
   @ManyToOne(() => Bus, (bus) => bus.seats)

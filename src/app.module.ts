@@ -9,6 +9,9 @@ import { DataService } from 'database/fake-data'
 import { Route } from './routes/entities/route.entity'
 import { RouteStop } from './route-stops/entities/route-stop.entity'
 import { Schedule } from './schedules/entities/schedule.entity'
+import { BusCompany } from './bus-companies/entities/bus-company.entity'
+import { Bus } from './buses/entities/bus.entity'
+import { Seat } from './seats/entities/seat.entity'
 
 @Module({
   imports: [
@@ -17,7 +20,7 @@ import { Schedule } from './schedules/entities/schedule.entity'
       envFilePath: ['.env.local', '.env']
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
-    TypeOrmModule.forFeature([Route, RouteStop, Schedule]),
+    TypeOrmModule.forFeature([Route, RouteStop, Schedule, BusCompany, Bus, Seat]),
     SchedulesModule
   ],
   controllers: [AppController],
