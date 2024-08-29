@@ -26,7 +26,7 @@ export class DataService {
   async seedData() {
     this.logger.warn('Seeding data...')
 
-    const ROUTES_QUANTITY = 2
+    const ROUTES_QUANTITY = 10
     const QUANTITY_IN_BETWEEN_OF_ROUTE_STOPS = 1
     const BUS_COMPANIES_QUANTITY = 5
     const BUS_QUANTITY = 5
@@ -89,7 +89,7 @@ export class DataService {
       const startLocation = fakerVI.location.state()
       const endLocation = fakerVI.location.state()
       const distanceKm = fakerVI.number.int({ min: 100, max: 1000 })
-      const durationHours = fakerVI.number.int({ min: 3, max: 30 })
+      const durationHours = fakerVI.number.int({ min: 3, max: 10 })
 
       routes.push(
         this.routeRepository.create({
@@ -154,7 +154,9 @@ export class DataService {
 
       // End location
       const endLocationDeparture = fakerVI.location.streetAddress() + ', ' + route.endLocation
-      const arrivalTimeEndDeparture = new Date(arrivalTimeStartDeparture.getTime() + 60 * 60 * 1000 * countTime++)
+      const arrivalTimeEndDeparture = new Date(
+        arrivalTimeStartDeparture.getTime() + route.durationHours * 60 * 60 * 1000
+      )
 
       routeStops.push(
         this.routeStopRepository.create({
@@ -195,7 +197,7 @@ export class DataService {
             busNumber: fakerVI.vehicle.vrm(),
             name: 'Xe khách ' + fakerVI.word.noun(),
             status: count % 5 === 0 ? BusStatus.EnRoute : BusStatus.Ready,
-            mainImage: fakerVI.image.url(),
+            images: [fakerVI.image.url(), fakerVI.image.url(), fakerVI.image.url()],
             busCompany: company
           })
         )
@@ -264,6 +266,7 @@ export class DataService {
         )
 
         i += pivot
+        break
       }
     }
 

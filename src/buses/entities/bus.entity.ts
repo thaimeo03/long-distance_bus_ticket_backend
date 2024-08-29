@@ -18,8 +18,8 @@ export class Bus {
   @Column({ type: 'enum', enum: BusStatus, default: BusStatus.Ready })
   status: BusStatus
 
-  @Column({ type: 'text' })
-  mainImage: string
+  @Column({ type: 'varchar', array: true })
+  images: string[]
 
   @ManyToOne(() => BusCompany, (busCompany) => busCompany.buses)
   busCompany: BusCompany

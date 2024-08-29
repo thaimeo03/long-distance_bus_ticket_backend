@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common'
 import { SchedulesService } from './schedules.service'
+import { ResponseData } from 'common/core/response-success.dto'
 
 @Controller('schedules')
 export class SchedulesController {
@@ -7,6 +8,11 @@ export class SchedulesController {
 
   @Get('all/available')
   async getAllAvailableSchedules() {
-    return this.schedulesService.getAllAvailableSchedules()
+    const data = await this.schedulesService.getAllAvailableSchedules()
+
+    return new ResponseData({
+      message: 'Get all available schedules successfully',
+      data
+    })
   }
 }
