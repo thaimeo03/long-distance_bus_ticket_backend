@@ -9,6 +9,7 @@ import { BusCompany } from 'src/bus-companies/entities/bus-company.entity'
 import { Bus } from 'src/buses/entities/bus.entity'
 import { Seat } from 'src/seats/entities/seat.entity'
 import { BusStatus } from 'common/enums/buses.enum'
+import { Price } from 'src/prices/entities/price.entity'
 
 @Injectable()
 export class DataService {
@@ -20,7 +21,8 @@ export class DataService {
     @InjectRepository(Seat) private seatRepository: Repository<Seat>,
     @InjectRepository(Route) private routeRepository: Repository<Route>,
     @InjectRepository(Schedule) private scheduleRepository: Repository<Schedule>,
-    @InjectRepository(RouteStop) private routeStopRepository: Repository<RouteStop>
+    @InjectRepository(RouteStop) private routeStopRepository: Repository<RouteStop>,
+    @InjectRepository(Price) private priceRepository: Repository<Price>
   ) {}
 
   async seedData() {
@@ -72,6 +74,20 @@ export class DataService {
         ...(await this.scheduleRepository.save(
           this.seedSchedules({
             buses: buses,
+            routeStops: routeStops,
+            quantityInBetweenRoute: QUANTITY_IN_BETWEEN_OF_ROUTE_STOPS
+          })
+        ))
+      )
+    }
+
+    // seed prices
+    const prices: Price[] = await this.priceRepository.find()
+    if (!prices.length) {
+      prices.push(
+        ...(await this.priceRepository.save(
+          this.seedPrices({
+            routes: routes,
             routeStops: routeStops,
             quantityInBetweenRoute: QUANTITY_IN_BETWEEN_OF_ROUTE_STOPS
           })
@@ -271,5 +287,36 @@ export class DataService {
     }
 
     return schedules
+  }
+
+  seedPrices({
+    routes,
+    routeStops,
+    quantityInBetweenRoute
+  }: {
+    routes: Route[]
+    routeStops: RouteStop[]
+    quantityInBetweenRoute: number
+  }): Price[] {
+    const prices: Price[] = []
+    const pivot = quantityInBetweenRoute + 2
+    let i = 0
+
+    for (const route of routes) {
+      const startStop = routeStops[i]
+      const endStop = routeStops[i + pivot - 1]
+      i += pivot
+
+      prices.push(
+        this.priceRepository.create({
+          price: fakerVI.number.int({ min: 100000, max: 1000000 }),
+          route: route,
+          startStop: startStop,
+          endStop: endStop
+        })
+      )
+    }
+
+    return prices
   }
 }

@@ -12,7 +12,7 @@ export class SchedulesService {
   // Join route, bus, routeStop, prices
   async getAllAvailableSchedules() {
     const schedules = await this.scheduleRepository.find({
-      relations: ['routeStop.route.routeStops', 'bus.busCompany', 'routeStop.route.prices'],
+      relations: ['routeStop.route.routeStops', 'bus.busCompany', 'routeStop.route.prices', 'bus.seats'],
       where: { bus: { status: BusStatus.Ready } },
       order: { departureTime: 'ASC' }
     })

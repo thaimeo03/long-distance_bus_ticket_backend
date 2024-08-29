@@ -12,6 +12,7 @@ import { Schedule } from './schedules/entities/schedule.entity'
 import { BusCompany } from './bus-companies/entities/bus-company.entity'
 import { Bus } from './buses/entities/bus.entity'
 import { Seat } from './seats/entities/seat.entity'
+import { Price } from './prices/entities/price.entity'
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { Seat } from './seats/entities/seat.entity'
       envFilePath: ['.env.local', '.env']
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
-    TypeOrmModule.forFeature([Route, RouteStop, Schedule, BusCompany, Bus, Seat]),
+    TypeOrmModule.forFeature([Route, RouteStop, Schedule, BusCompany, Bus, Seat, Price]),
     SchedulesModule
   ],
   controllers: [AppController],
