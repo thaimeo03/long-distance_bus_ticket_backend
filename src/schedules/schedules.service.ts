@@ -37,6 +37,8 @@ export class SchedulesService {
         id: schedule.id,
         departureTime: schedule.departureTime
       })
+
+      groupedData.get(key).bus.seats = schedule.bus.seats.sort((a, b) => a.seatNumber - b.seatNumber)
     })
 
     return Array.from(groupedData.values())
