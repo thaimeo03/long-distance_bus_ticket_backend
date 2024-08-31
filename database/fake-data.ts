@@ -28,10 +28,10 @@ export class DataService {
   async seedData() {
     this.logger.warn('Seeding data...')
 
-    const ROUTES_QUANTITY = 10
+    const ROUTES_QUANTITY = 50
     const QUANTITY_IN_BETWEEN_OF_ROUTE_STOPS = 1
     const BUS_COMPANIES_QUANTITY = 5
-    const BUS_QUANTITY = 5
+    const BUS_QUANTITY = 120
 
     // // seed routes
     const routes: Route[] = await this.routeRepository.find()
@@ -100,10 +100,16 @@ export class DataService {
 
   seedRoutes(quantity: number): Route[] {
     const routes: Route[] = []
+
+    const locations: string[] = []
+    for (let i = 0; i < 30; i++) {
+      locations.push(fakerVI.location.state())
+    }
+
     // two-way
     while (quantity--) {
-      const startLocation = fakerVI.location.state()
-      const endLocation = fakerVI.location.state()
+      const startLocation = fakerVI.helpers.arrayElement(locations)
+      const endLocation = fakerVI.helpers.arrayElement(locations)
       const distanceKm = fakerVI.number.int({ min: 100, max: 1000 })
       const durationHours = fakerVI.number.int({ min: 3, max: 10 })
 

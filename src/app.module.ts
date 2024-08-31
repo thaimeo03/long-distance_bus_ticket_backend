@@ -13,6 +13,7 @@ import { BusCompany } from './bus-companies/entities/bus-company.entity'
 import { Bus } from './buses/entities/bus.entity'
 import { Seat } from './seats/entities/seat.entity'
 import { Price } from './prices/entities/price.entity'
+import { RouteStopsModule } from './route-stops/route-stops.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { Price } from './prices/entities/price.entity'
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
     TypeOrmModule.forFeature([Route, RouteStop, Schedule, BusCompany, Bus, Seat, Price]),
-    SchedulesModule
+    SchedulesModule,
+    RouteStopsModule
   ],
   controllers: [AppController],
   providers: [AppService, DataService]
