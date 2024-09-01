@@ -23,11 +23,12 @@ export class SchedulesService {
     for (const schedule of allSchedules) {
       if (
         schedule.bus.status === BusStatus.Ready &&
-        findSchedulesDto.pickupLocation.includes(schedule.routeStop.route.startLocation) &&
-        findSchedulesDto.dropOffLocation.includes(schedule.routeStop.route.endLocation)
+        findSchedulesDto.pickupLocation.toLowerCase().includes(schedule.routeStop.route.startLocation.toLowerCase()) &&
+        findSchedulesDto.dropOffLocation.toLowerCase().includes(schedule.routeStop.route.endLocation.toLowerCase())
         // findSchedulesDto.departureDate.getDate() === schedule.departureTime.getDate()
       ) {
         const key = `${schedule.bus.busNumber}-${schedule.routeStop.route.startLocation}-${schedule.routeStop.route.endLocation}`
+        schedule.bus.seats = schedule.bus.seats.sort((a, b) => a.seatNumber - b.seatNumber)
 
         if (!map.has(key)) {
           schedulesMatching.push({

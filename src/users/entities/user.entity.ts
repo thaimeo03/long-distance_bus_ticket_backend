@@ -12,12 +12,15 @@ export class User {
   email: string
 
   @Column({ type: 'varchar' })
+  fullName: string
+
+  @Column({ type: 'varchar' })
   phoneNumber: string
 
   @Column({ type: 'smallint' })
   age: number
 
-  @Column()
+  @Column({ type: 'varchar', nullable: true })
   passwordHashed: string
 
   @Column({ type: 'boolean', default: true })

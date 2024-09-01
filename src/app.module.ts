@@ -14,6 +14,10 @@ import { Bus } from './buses/entities/bus.entity'
 import { Seat } from './seats/entities/seat.entity'
 import { Price } from './prices/entities/price.entity'
 import { RouteStopsModule } from './route-stops/route-stops.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { UsersModule } from './users/users.module';
+import { BusesModule } from './buses/buses.module';
+import { SeatsModule } from './seats/seats.module';
 
 @Module({
   imports: [
@@ -24,7 +28,11 @@ import { RouteStopsModule } from './route-stops/route-stops.module';
     TypeOrmModule.forRoot(dataSourceOptions),
     TypeOrmModule.forFeature([Route, RouteStop, Schedule, BusCompany, Bus, Seat, Price]),
     SchedulesModule,
-    RouteStopsModule
+    RouteStopsModule,
+    BookingsModule,
+    UsersModule,
+    BusesModule,
+    SeatsModule
   ],
   controllers: [AppController],
   providers: [AppService, DataService]
