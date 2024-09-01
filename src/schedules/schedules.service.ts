@@ -12,38 +12,47 @@ export class SchedulesService {
 
   // Find schedules by pickup location, drop off location, and departure date
   // 1. Find all schedules having matching requirements
-  async findSchedules(findSchedulesDto: FindSchedulesDto) {
-    const allSchedules = await this.scheduleRepository.find({
-      relations: ['routeStop.route.routeStops', 'bus.busCompany', 'routeStop.route.prices', 'bus.seats']
-    })
-
+  async findSchedules(findSchedulesDto: FindSchedulesDto): Promise<GetAvailableScheduleDto[]> {
     const schedulesMatching: GetAvailableScheduleDto[] = []
     const map: Map<string, boolean> = new Map()
 
+    const qb = this.scheduleRepository
+      .createQueryBuilder('schedule')
+      .innerJoinAndSelect('schedule.routeStop', 'routeStop')
+      .innerJoinAndSelect('routeStop.route', 'route')
+      .innerJoinAndSelect('schedule.bus', 'bus')
+      .innerJoinAndSelect('bus.seats', 'seats')
+      .innerJoinAndSelect('route.routeStops', 'routeStops')
+      .innerJoinAndSelect('route.prices', 'prices')
+      .innerJoinAndSelect('bus.busCompany', 'busCompany')
+      .where('bus.status = :status', { status: BusStatus.Ready })
+      .andWhere('LOWER(route.startLocation) LIKE LOWER(:pickupLocation)', {
+        pickupLocation: `%${findSchedulesDto.pickupLocation}%`
+      })
+      .andWhere('LOWER(route.endLocation) LIKE LOWER(:dropOffLocation)', {
+        dropOffLocation: `%${findSchedulesDto.dropOffLocation}%`
+      })
+      // .andWhere('DATE(schedule.departureTime) = DATE(:departureDate)', { departureDate: findSchedulesDto.departureDate })
+      .orderBy('routeStops.distanceFromStartKm', 'ASC')
+
+    const allSchedules = await qb.getMany()
+
     for (const schedule of allSchedules) {
-      if (
-        schedule.bus.status === BusStatus.Ready &&
-        findSchedulesDto.pickupLocation.toLowerCase().includes(schedule.routeStop.route.startLocation.toLowerCase()) &&
-        findSchedulesDto.dropOffLocation.toLowerCase().includes(schedule.routeStop.route.endLocation.toLowerCase())
-        // findSchedulesDto.departureDate.getDate() === schedule.departureTime.getDate()
-      ) {
-        const key = `${schedule.bus.busNumber}-${schedule.routeStop.route.startLocation}-${schedule.routeStop.route.endLocation}`
-        schedule.bus.seats = schedule.bus.seats.sort((a, b) => a.seatNumber - b.seatNumber)
+      const key = `${schedule.bus.busNumber}-${schedule.routeStop.route.startLocation}-${schedule.routeStop.route.endLocation}`
 
-        if (!map.has(key)) {
-          schedulesMatching.push({
-            bus: schedule.bus,
-            route: schedule.routeStop.route,
-            schedules: [
-              {
-                id: schedule.id,
-                departureTime: schedule.departureTime
-              }
-            ]
-          })
+      if (!map.has(key)) {
+        schedulesMatching.push({
+          bus: schedule.bus,
+          route: schedule.routeStop.route,
+          schedules: [
+            {
+              id: schedule.id,
+              departureTime: schedule.departureTime
+            }
+          ]
+        })
 
-          map.set(key, true)
-        }
+        map.set(key, true)
       }
     }
 

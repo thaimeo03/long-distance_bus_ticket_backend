@@ -4,7 +4,7 @@ import { RouteStop } from 'src/route-stops/entities/route-stop.entity'
 import { Route } from 'src/routes/entities/route.entity'
 import { Schedule } from 'src/schedules/entities/schedule.entity'
 import { Repository } from 'typeorm'
-import { fakerVI } from '@faker-js/faker'
+import { fa, fakerVI, ro } from '@faker-js/faker'
 import { BusCompany } from 'src/bus-companies/entities/bus-company.entity'
 import { Bus } from 'src/buses/entities/bus.entity'
 import { Seat } from 'src/seats/entities/seat.entity'
@@ -29,89 +29,73 @@ export class DataService {
     this.logger.warn('Seeding data...')
 
     const ROUTES_QUANTITY = 50
-    const QUANTITY_IN_BETWEEN_OF_ROUTE_STOPS = 1
     const BUS_COMPANIES_QUANTITY = 5
     const BUS_QUANTITY = 120
 
-    // // seed routes
-    const routes: Route[] = await this.routeRepository.find()
-    if (!routes.length) {
-      routes.push(...(await this.routeRepository.save(this.seedRoutes(ROUTES_QUANTITY))))
+    // seed routes
+    let routes: Route[] = await this.routeRepository.find()
+    if (routes.length === 0) {
+      routes = await this.seedRoutes(ROUTES_QUANTITY)
     }
 
-    // // seed route stops
-    const routeStops: RouteStop[] = await this.routeStopRepository.find()
-    if (!routeStops.length) {
-      routeStops.push(
-        ...(await this.routeStopRepository.save(
-          this.seedRouteStops({ quantityInBetween: QUANTITY_IN_BETWEEN_OF_ROUTE_STOPS, routes: routes })
-        ))
-      )
+    // seed route stops
+    let routeStops: RouteStop[] = await this.routeStopRepository.find()
+    if (routeStops.length === 0) {
+      routeStops = await this.seedRouteStops(routes)
     }
 
-    // seed companies
-    const companies: BusCompany[] = await this.busCompanyRepository.find()
-    if (!companies.length) {
-      companies.push(...(await this.busCompanyRepository.save(this.seedBusCompanies(BUS_COMPANIES_QUANTITY))))
+    // seed bus companies
+    let busCompanies: BusCompany[] = await this.busCompanyRepository.find()
+    if (busCompanies.length === 0) {
+      busCompanies = await this.seedBusCompanies(BUS_COMPANIES_QUANTITY)
     }
 
     // seed buses
-    const buses: Bus[] = await this.busRepository.find()
-    if (!buses.length) {
-      buses.push(...(await this.busRepository.save(this.seedBuses({ quantity: BUS_QUANTITY, companies: companies }))))
+    let buses: Bus[] = await this.busRepository.find()
+    if (buses.length === 0) {
+      buses = await this.seedBuses({ quantity: BUS_QUANTITY, companies: busCompanies })
     }
 
     // seed seats
-    const seats: Seat[] = await this.seatRepository.find()
-    if (!seats.length) {
-      seats.push(...(await this.seatRepository.save(this.seedSeats(buses))))
+    let seats: Seat[] = await this.seatRepository.find()
+    if (seats.length === 0) {
+      seats = await this.seedSeats(buses)
     }
 
     // seed schedules
-    const schedules: Schedule[] = await this.scheduleRepository.find()
-    if (!schedules.length) {
-      schedules.push(
-        ...(await this.scheduleRepository.save(
-          this.seedSchedules({
-            buses: buses,
-            routeStops: routeStops,
-            quantityInBetweenRoute: QUANTITY_IN_BETWEEN_OF_ROUTE_STOPS
-          })
-        ))
-      )
+    let schedules: Schedule[] = await this.scheduleRepository.find()
+    if (schedules.length === 0) {
+      schedules = await this.seedSchedules({ buses: buses, routes: routes })
     }
 
     // seed prices
-    const prices: Price[] = await this.priceRepository.find()
-    if (!prices.length) {
-      prices.push(
-        ...(await this.priceRepository.save(
-          this.seedPrices({
-            routes: routes,
-            routeStops: routeStops,
-            quantityInBetweenRoute: QUANTITY_IN_BETWEEN_OF_ROUTE_STOPS
-          })
-        ))
-      )
+    let prices: Price[] = await this.priceRepository.find()
+    if (prices.length === 0) {
+      prices = await this.seedPrices(routes)
     }
 
     this.logger.warn('Seeding data complete!')
   }
 
-  seedRoutes(quantity: number): Route[] {
+  async seedRoutes(quantity: number) {
     const routes: Route[] = []
-
-    const locations: string[] = []
-    for (let i = 0; i < 30; i++) {
-      locations.push(fakerVI.location.state())
-    }
 
     // two-way
     while (quantity--) {
-      const startLocation = fakerVI.helpers.arrayElement(locations)
-      const endLocation = fakerVI.helpers.arrayElement(locations)
+      const startLocation = fakerVI.location.state()
+      const endLocation = fakerVI.location.state()
+
+      const existedRoute = await this.routeRepository.findOneBy({
+        startLocation: startLocation,
+        endLocation: endLocation
+      })
+      if (existedRoute || startLocation === endLocation) {
+        quantity++
+        continue
+      }
+
       const distanceKm = fakerVI.number.int({ min: 100, max: 1000 })
-      const durationHours = fakerVI.number.int({ min: 3, max: 10 })
+      const durationHours = Number((distanceKm / 60).toFixed(2)) // 60 km per hour
 
       routes.push(
         this.routeRepository.create({
@@ -121,6 +105,7 @@ export class DataService {
           durationHours: durationHours
         })
       )
+
       routes.push(
         this.routeRepository.create({
           startLocation: endLocation,
@@ -131,16 +116,18 @@ export class DataService {
       )
     }
 
-    return routes
+    return await Promise.all(routes.map((route) => this.routeRepository.save(route)))
   }
 
-  seedRouteStops({ quantityInBetween, routes }: { quantityInBetween: number; routes: Route[] }): RouteStop[] {
+  async seedRouteStops(routes: Route[]) {
     const routeStops: RouteStop[] = []
 
     for (const route of routes) {
       // Start location
       const startLocationDeparture = fakerVI.location.streetAddress() + ', ' + route.startLocation
       const arrivalTimeStartDeparture = fakerVI.date.future()
+      const quantityInBetween = fakerVI.number.int({ min: 1, max: 4 })
+
       routeStops.push(
         this.routeStopRepository.create({
           route: route,
@@ -151,27 +138,18 @@ export class DataService {
       )
 
       // Middle locations
-      const middleLocations: string[] = []
-      let quantity = quantityInBetween,
-        countTime = 1,
-        distance = quantityInBetween
-
-      while (quantity--) {
-        const middleLocation = fakerVI.location.streetAddress() + ', ' + fakerVI.location.state()
-        const moreDistance = fakerVI.number.int({ min: 1, max: 10 })
-
-        middleLocations.push(middleLocation)
-
+      for (let i = 1; i < quantityInBetween; i++) {
+        const distanceFromStartKm = Math.floor((i * route.distanceKm) / quantityInBetween)
         routeStops.push(
           this.routeStopRepository.create({
             route: route,
-            location: middleLocation,
-            arrivalTime: new Date(arrivalTimeStartDeparture.getTime() + 60 * 60 * 1000 * countTime++),
-            distanceFromStartKm: distance + moreDistance
+            location: fakerVI.location.streetAddress() + ', ' + fakerVI.location.state(),
+            distanceFromStartKm: distanceFromStartKm,
+            arrivalTime: new Date(
+              arrivalTimeStartDeparture.getTime() + Math.floor(distanceFromStartKm / 60) * 60 * 1000
+            )
           })
         )
-
-        distance += moreDistance
       }
 
       // End location
@@ -190,139 +168,118 @@ export class DataService {
       )
     }
 
-    return routeStops
+    return await Promise.all(routeStops.map((routeStop) => this.routeStopRepository.save(routeStop)))
   }
 
-  seedBusCompanies(quantity: number): BusCompany[] {
+  async seedBusCompanies(quantity: number) {
     const busCompanies: BusCompany[] = []
 
     while (quantity--) {
       busCompanies.push(
         this.busCompanyRepository.create({
           name: fakerVI.company.name(),
-          mainImage: fakerVI.image.url()
+          mainImage: fakerVI.image.urlLoremFlickr({ category: 'business' })
         })
       )
     }
 
-    return busCompanies
+    return await Promise.all(busCompanies.map((busCompany) => this.busCompanyRepository.save(busCompany)))
   }
 
-  seedBuses({ quantity, companies }: { quantity: number; companies: BusCompany[] }): Bus[] {
+  async seedBuses({ quantity, companies }: { quantity: number; companies: BusCompany[] }) {
     const buses: Bus[] = []
 
     for (const company of companies) {
-      let count = quantity
-      while (count--) {
+      for (let i = 1; i <= quantity; i++) {
         buses.push(
           this.busRepository.create({
             busNumber: fakerVI.vehicle.vrm(),
             name: 'Xe khách ' + fakerVI.word.noun(),
-            status: count % 5 === 0 ? BusStatus.EnRoute : BusStatus.Ready,
-            images: [fakerVI.image.url(), fakerVI.image.url(), fakerVI.image.url()],
+            status: i % 5 === 0 ? BusStatus.EnRoute : BusStatus.Ready,
+            images: [
+              fakerVI.image.urlLoremFlickr({ category: 'bus' }),
+              fakerVI.image.urlLoremFlickr({ category: 'bus' }),
+              fakerVI.image.urlLoremFlickr({ category: 'bus' })
+            ],
             busCompany: company
           })
         )
       }
     }
 
-    return buses
+    return await Promise.all(buses.map((bus) => this.busRepository.save(bus)))
   }
 
-  seedSeats(buses: Bus[]): Seat[] {
+  async seedSeats(buses: Bus[]) {
     const seats: Seat[] = []
-    const numberOfSeats: number[] = [16, 24, 28, 32, 40, 44, 45, 46]
+    const numberOfSeats: number[] = [16, 24, 28, 32, 40, 44, 45]
 
     for (const bus of buses) {
-      const numberOfSeat = numberOfSeats[Math.floor(Math.random() * numberOfSeats.length)]
+      const numberOfSeat = fakerVI.helpers.arrayElement(numberOfSeats)
 
       for (let i = 0; i < numberOfSeat; i++) {
         seats.push(
           this.seatRepository.create({
             seatNumber: i + 1,
-            isAvailable: i % 4 === 0 ? false : true,
+            isAvailable: i % 5 === 0 ? false : true,
             bus: bus
           })
         )
       }
     }
 
-    return seats
+    return await Promise.all(seats.map((seat) => this.seatRepository.save(seat)))
   }
 
-  seedSchedules({
-    buses,
-    routeStops,
-    quantityInBetweenRoute
-  }: {
-    buses: Bus[]
-    routeStops: RouteStop[]
-    quantityInBetweenRoute: number
-  }): Schedule[] {
+  async seedSchedules({ buses, routes }: { buses: Bus[]; routes: Route[] }) {
     const schedules: Schedule[] = []
-    const pivot = quantityInBetweenRoute + 2
-    let i = 0
 
-    for (const bus of buses) {
-      if (i >= routeStops.length) break
+    for (const route of routes) {
+      const routeStops = await this.routeStopRepository.find({
+        where: { route: { id: route.id } },
+        order: { distanceFromStartKm: 'ASC' }
+      })
 
-      while (i < routeStops.length) {
-        // Departure direction
-        schedules.push(
-          this.scheduleRepository.create({
-            bus: bus,
-            departureTime: routeStops[i].arrivalTime,
-            routeStop: routeStops[i]
-          })
-        )
+      if (buses.length === 0) break
+      const bus = buses.shift()
 
-        // Arrival direction
-        schedules.push(
-          this.scheduleRepository.create({
-            bus: bus,
-            departureTime: new Date(
-              routeStops[i + pivot - 1].arrivalTime.getTime() + 60 * 60 * 1000 * quantityInBetweenRoute
-            ),
-            routeStop: routeStops[i + pivot - 1]
-          })
-        )
-
-        i += pivot
-        break
+      for (let i = 0; i < routeStops.length; i++) {
+        if (i % 2 === 0) {
+          schedules.push(
+            this.scheduleRepository.create({
+              departureTime: routeStops[i].arrivalTime,
+              bus: bus,
+              routeStop: routeStops[i]
+            })
+          )
+        }
       }
     }
 
-    return schedules
+    return await Promise.all(schedules.map((schedule) => this.scheduleRepository.save(schedule)))
   }
 
-  seedPrices({
-    routes,
-    routeStops,
-    quantityInBetweenRoute
-  }: {
-    routes: Route[]
-    routeStops: RouteStop[]
-    quantityInBetweenRoute: number
-  }): Price[] {
+  async seedPrices(routes: Route[]) {
     const prices: Price[] = []
-    const pivot = quantityInBetweenRoute + 2
-    let i = 0
 
     for (const route of routes) {
-      const startStop = routeStops[i]
-      const endStop = routeStops[i + pivot - 1]
-      i += pivot
+      const routeStops = await this.routeStopRepository.find({
+        where: { route: { id: route.id } },
+        order: { distanceFromStartKm: 'ASC' }
+      })
 
-      prices.push(
-        this.priceRepository.create({
-          price: fakerVI.number.int({ min: 100000, max: 1000000 }),
-          route: route,
-          startStop: startStop,
-          endStop: endStop
-        })
-      )
+      for (let i = 0; i < routeStops.length - 1; i++) {
+        prices.push(
+          this.priceRepository.create({
+            route: route,
+            startStop: routeStops[i],
+            endStop: routeStops[i + 1],
+            price: fakerVI.number.int({ min: 50000, max: 100000 })
+          })
+        )
+      }
     }
 
-    return prices
+    return await Promise.all(prices.map((price) => this.priceRepository.save(price)))
   }
 }

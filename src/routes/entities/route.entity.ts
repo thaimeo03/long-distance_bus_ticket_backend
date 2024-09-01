@@ -16,7 +16,7 @@ export class Route {
   @Column({ type: 'integer', nullable: true })
   distanceKm: number
 
-  @Column({ type: 'integer', nullable: true })
+  @Column({ type: 'float', nullable: true })
   durationHours: number
 
   @OneToMany(() => RouteStop, (routeStop) => routeStop.route)
