@@ -19,12 +19,26 @@ export class SeatsService {
     })
     if (!bus) throw new NotFoundException('Bus not found')
 
-    await Promise.all(
+    return await Promise.all(
       seats.map(async (seat) => {
         const seatToUpdate = await this.seatRepository.findOne({ where: { seatNumber: seat, bus } })
         if (!seatToUpdate || !seatToUpdate.isAvailable) throw new BadRequestException('Seat not available')
         seatToUpdate.isAvailable = false
-        await this.seatRepository.save(seatToUpdate)
+        return await this.seatRepository.save(seatToUpdate)
+      })
+    )
+  }
+
+  // 1. Check seat is available and update it
+  async unBookSeats({ seats, busId }: { seats: number[]; busId: string }) {
+    const bus = await this.busRepository.findOne({
+      where: { id: busId }
+    })
+    if (!bus) throw new NotFoundException('Bus not found')
+
+    await Promise.all(
+      seats.map(async (seat) => {
+        await this.seatRepository.update({ seatNumber: seat, bus }, { isAvailable: true })
       })
     )
   }

@@ -16,7 +16,7 @@ export class Booking {
   @Column({ type: 'integer', nullable: true })
   quantity: number
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   bookingDate: Date
 
   @ManyToOne(() => User, (user) => user.bookings)

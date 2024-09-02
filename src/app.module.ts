@@ -13,12 +13,13 @@ import { BusCompany } from './bus-companies/entities/bus-company.entity'
 import { Bus } from './buses/entities/bus.entity'
 import { Seat } from './seats/entities/seat.entity'
 import { Price } from './prices/entities/price.entity'
-import { RouteStopsModule } from './route-stops/route-stops.module';
-import { BookingsModule } from './bookings/bookings.module';
-import { UsersModule } from './users/users.module';
-import { BusesModule } from './buses/buses.module';
-import { SeatsModule } from './seats/seats.module';
-import { PaymentsModule } from './payments/payments.module';
+import { RouteStopsModule } from './route-stops/route-stops.module'
+import { BookingsModule } from './bookings/bookings.module'
+import { UsersModule } from './users/users.module'
+import { BusesModule } from './buses/buses.module'
+import { SeatsModule } from './seats/seats.module'
+import { PaymentsModule } from './payments/payments.module'
+import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PaymentsModule } from './payments/payments.module';
       envFilePath: ['.env.local', '.env']
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([Route, RouteStop, Schedule, BusCompany, Bus, Seat, Price]),
     SchedulesModule,
     RouteStopsModule,
