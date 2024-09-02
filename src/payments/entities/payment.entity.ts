@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm'
 import { Booking } from 'src/bookings/entities/booking.entity'
+import { PaymentMethod } from 'common/enums/payments.enum'
 
 @Entity('Payments')
 export class Payment {
@@ -9,10 +10,10 @@ export class Payment {
   @Column({ type: 'boolean', default: false })
   paymentStatus: boolean
 
-  @Column({ type: 'smallint', nullable: true })
+  @Column({ type: 'enum', enum: PaymentMethod, nullable: true })
   method: number
 
-  @Column({ type: 'bigint', nullable: true })
+  @Column({ type: 'bigint' })
   amount: number
 
   @Column({ type: 'date', nullable: true })

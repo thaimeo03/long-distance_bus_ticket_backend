@@ -1,26 +1,50 @@
-import { Injectable } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
-import Stripe from 'stripe'
-const stripe = new Stripe(
-  'sk_test_51PuI8S04HawVqBs75w181D3qfyEnqDjPEInrVqUSNpp6MRYCMdK1vHjHwtivLyeCoo78Z7VDFEIT1Trz1N2DxyYD00kPSCNQsC'
-)
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { ProcessPaymentDto } from './dto/process-payment.dto'
+import { PaymentStrategyFactory } from './factories/payment-strategy.factory'
+import { CreatePaymentDto } from './dto/create-payment.dto'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Payment } from './entities/payment.entity'
+import { Repository } from 'typeorm'
 
 @Injectable()
 export class PaymentsService {
-  async testStripe() {
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price: 'price_1PuIkt04HawVqBs7NC8J2Afd',
-          quantity: 2
-        }
-      ],
-      customer_email: 'thai@gmail.com',
-      mode: 'payment',
-      success_url: `http://localhost:9999?success=true`,
-      cancel_url: `http://localhost:9999?canceled=true`
+  constructor(
+    @InjectRepository(Payment) private paymentRepository: Repository<Payment>,
+    private paymentStrategyFactory: PaymentStrategyFactory
+  ) {}
+
+  // 1. Get strategy
+  // 2. Update payment method
+  // 3. Pay
+  async processPayment(processPaymentDto: ProcessPaymentDto) {
+    // 1
+    const strategy = await this.paymentStrategyFactory.createPaymentStrategy(Number(processPaymentDto.method))
+
+    // 2
+    const payment = await this.paymentRepository.findOne({
+      where: { booking: { id: processPaymentDto.bookingId } },
+      relations: ['booking']
     })
 
-    return session
+    if (!payment) {
+      throw new NotFoundException('Payment not found')
+    }
+    await this.paymentRepository.update({ id: payment.id }, { method: processPaymentDto.method })
+
+    return await strategy.pay(processPaymentDto.bookingId)
+  }
+
+  async createPayment(createPaymentDto: CreatePaymentDto) {
+    return await this.paymentRepository.save(createPaymentDto)
+  }
+
+  async deletePayment(id: string) {
+    return await this.paymentRepository.delete({ id: id })
+  }
+
+  async inActivePayment(processPaymentDto: ProcessPaymentDto) {
+    const strategy = await this.paymentStrategyFactory.createPaymentStrategy(Number(processPaymentDto.method))
+
+    strategy.inActivePayment(processPaymentDto.bookingId)
   }
 }

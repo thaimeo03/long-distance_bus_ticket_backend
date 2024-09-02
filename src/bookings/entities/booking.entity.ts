@@ -10,9 +10,6 @@ export class Booking {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'boolean', default: false })
-  bookingStatus: boolean
-
   @Column({ type: 'integer', nullable: true })
   quantity: number
 

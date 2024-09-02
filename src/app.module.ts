@@ -20,6 +20,7 @@ import { BusesModule } from './buses/buses.module'
 import { SeatsModule } from './seats/seats.module'
 import { PaymentsModule } from './payments/payments.module'
 import { ScheduleModule } from '@nestjs/schedule'
+import { PricesModule } from './prices/prices.module';
 
 @Module({
   imports: [
@@ -36,7 +37,8 @@ import { ScheduleModule } from '@nestjs/schedule'
     UsersModule,
     BusesModule,
     SeatsModule,
-    PaymentsModule
+    PaymentsModule,
+    PricesModule
   ],
   controllers: [AppController],
   providers: [AppService, DataService]
