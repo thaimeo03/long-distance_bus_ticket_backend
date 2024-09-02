@@ -18,6 +18,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { UsersModule } from './users/users.module';
 import { BusesModule } from './buses/buses.module';
 import { SeatsModule } from './seats/seats.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { SeatsModule } from './seats/seats.module';
     BookingsModule,
     UsersModule,
     BusesModule,
-    SeatsModule
+    SeatsModule,
+    PaymentsModule
   ],
   controllers: [AppController],
   providers: [AppService, DataService]
