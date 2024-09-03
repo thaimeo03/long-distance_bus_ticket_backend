@@ -48,7 +48,10 @@ export class BookingsService {
     if (!dropOffStop) throw new NotFoundException('Drop off stop not found')
 
     // 5
-    const price = await this.pricesService.getPriceByBooking({ pickupStop, dropOffStop })
+    const price = await this.pricesService.getPriceByRouteStops({
+      pickupStopId: createBookingDto.pickupStopId,
+      dropOffStopId: createBookingDto.dropOffStopId
+    })
     const payment = await this.paymentsService.createPayment({
       amount: price.price
     })

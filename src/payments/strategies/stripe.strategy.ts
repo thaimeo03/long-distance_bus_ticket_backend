@@ -64,9 +64,13 @@ export class StripeStrategy implements PaymentStrategy {
   }
 
   async inActivePayment(bookingId: string) {
-    const product = await stripe.products.retrieve(bookingId)
-    if (product && product.active) {
-      await stripe.products.update(bookingId, { active: false })
+    try {
+      const product = await stripe.products.retrieve(bookingId)
+      if (product && product.active) {
+        await stripe.products.update(bookingId, { active: false })
+      }
+    } catch (error) {
+      // console.log(error)
     }
   }
 }

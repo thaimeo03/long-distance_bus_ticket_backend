@@ -4,21 +4,26 @@ import { Route } from 'src/routes/entities/route.entity'
 import { Repository } from 'typeorm'
 import { Price } from './entities/price.entity'
 import { RouteStop } from 'src/route-stops/entities/route-stop.entity'
+import { GetPriceByRouteStopDto } from './dto/get-price-by-route-stop.dto'
 
 @Injectable()
 export class PricesService {
   constructor(
     @InjectRepository(Route) private routeRepository: Repository<Route>,
-    @InjectRepository(Price) private priceRepository: Repository<Price>
+    @InjectRepository(Price) private priceRepository: Repository<Price>,
+    @InjectRepository(RouteStop) private routeStopRepository: Repository<RouteStop>
   ) {}
 
-  async getPriceByBooking({ pickupStop, dropOffStop }: { pickupStop: RouteStop; dropOffStop: RouteStop }) {
+  async getPriceByRouteStops({ pickupStopId, dropOffStopId }: GetPriceByRouteStopDto) {
+    const pickupStop = await this.routeStopRepository.findOneBy({ id: pickupStopId })
+    const dropOffStop = await this.routeStopRepository.findOneBy({ id: dropOffStopId })
+
     let price = await this.priceRepository.findOneBy({
       startStop: pickupStop,
       endStop: dropOffStop
     })
 
-    const route = await this.routeRepository.findOneBy({ routeStops: pickupStop })
+    const route = await this.routeRepository.findOneBy({ routeStops: { id: pickupStopId } })
 
     if (!price) {
       price = await this.priceRepository.findOneBy({ route })
