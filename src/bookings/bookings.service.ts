@@ -66,7 +66,12 @@ export class BookingsService {
       payment
     })
 
-    return await this.bookingRepository.save(booking)
+    const bookingSaved = await this.bookingRepository.save(booking)
+
+    return {
+      bookingId: bookingSaved.id,
+      quantity: bookingSaved.quantity
+    }
   }
 
   // 1. Find all bookings overdue
