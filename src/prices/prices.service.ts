@@ -18,13 +18,20 @@ export class PricesService {
       endStop: dropOffStop
     })
 
+    const route = await this.routeRepository.findOneBy({ routeStops: pickupStop })
+
     if (!price) {
-      const route = await this.routeRepository.findOneBy({ routeStops: pickupStop })
       price = await this.priceRepository.findOneBy({ route })
     }
 
+    // Create by distance
     if (!price) {
-      throw new NotFoundException('Price not found')
+      price = this.priceRepository.create({
+        startStop: pickupStop,
+        endStop: dropOffStop,
+        route: route,
+        price: (dropOffStop.distanceFromStartKm - pickupStop.distanceFromStartKm) * 1000
+      })
     }
 
     return price

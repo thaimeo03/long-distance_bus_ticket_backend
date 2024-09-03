@@ -22,18 +22,24 @@ export class SchedulesService {
       .innerJoinAndSelect('routeStop.route', 'route')
       .innerJoinAndSelect('schedule.bus', 'bus')
       .innerJoinAndSelect('bus.seats', 'seats')
+      .innerJoinAndSelect('route.routeStops', 'pickupStop')
+      .innerJoinAndSelect('route.routeStops', 'dropOffStop')
       .innerJoinAndSelect('route.routeStops', 'routeStops')
       .innerJoinAndSelect('route.prices', 'prices')
       .innerJoinAndSelect('bus.busCompany', 'busCompany')
       .where('bus.status = :status', { status: BusStatus.Ready })
-      .andWhere('LOWER(route.startLocation) LIKE LOWER(:pickupLocation)', {
+      .andWhere('LOWER(pickupStop.location) LIKE LOWER(:pickupLocation)', {
         pickupLocation: `%${findSchedulesDto.pickupLocation}%`
       })
-      .andWhere('LOWER(route.endLocation) LIKE LOWER(:dropOffLocation)', {
+      .andWhere('LOWER(dropOffStop.location) LIKE LOWER(:dropOffLocation)', {
         dropOffLocation: `%${findSchedulesDto.dropOffLocation}%`
       })
+      .andWhere('pickupStop.distanceFromStartKm < dropOffStop.distanceFromStartKm') // Ensure pickup is before drop-off
       // .andWhere('DATE(schedule.departureTime) = DATE(:departureDate)', { departureDate: findSchedulesDto.departureDate })
       .orderBy('routeStops.distanceFromStartKm', 'ASC')
+      .addOrderBy('schedule.departureTime', 'ASC')
+      .addOrderBy('prices.price', 'ASC')
+      .addOrderBy('seats.seatNumber', 'ASC')
 
     const allSchedules = await qb.getMany()
 
