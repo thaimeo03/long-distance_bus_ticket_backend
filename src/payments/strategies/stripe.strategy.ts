@@ -41,8 +41,8 @@ export class StripeStrategy implements PaymentStrategy {
       ],
       customer_email: booking.user.email,
       mode: 'payment',
-      success_url: `http://localhost:9999?success=true`,
-      cancel_url: `http://localhost:9999?canceled=true`
+      success_url: `http://localhost:9999/payments/callback?success=true&bookingId=${bookingId}`,
+      cancel_url: `http://localhost:9999/payments/callback?success=false&bookingId=${bookingId}`
     })
 
     return session.url
