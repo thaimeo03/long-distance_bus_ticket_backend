@@ -78,7 +78,7 @@ export class BookingsService {
   // 1. Find all bookings overdue
   // 2. Update seat status and in active payment
   // 3. Remove them
-  // @Cron('*/10 * * * * *') // every 10 seconds
+  @Cron('*/10 * * * * *') // every 10 seconds
   async removeBookingOverdue() {
     const TIME_LIMIT = this.configService.get('BOOKING_TIME_LIMIT') || 1 // per minute
 
