@@ -6,6 +6,7 @@ interface UserDto {
 }
 
 export class TicketInfoDto {
+  code: string
   quantity: number
   user: UserDto
   seats: string

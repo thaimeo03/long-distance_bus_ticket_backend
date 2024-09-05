@@ -19,6 +19,7 @@ export class MailsService {
       template: './ticket.template.hbs',
       context: {
         // ✏️ filling curly brackets with content
+        code: tickInfoDto.code,
         fullName: tickInfoDto.user.fullName,
         age: tickInfoDto.user.age,
         phoneNumber: tickInfoDto.user.phoneNumber,
