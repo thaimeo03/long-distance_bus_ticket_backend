@@ -66,8 +66,8 @@ export class PaymentsService {
       const bookingInfo = await this.bookingsService.getBookingInfo(bookingId)
       await this.mailsService.sendTicketInfo({
         quantity: bookingInfo.quantity,
-        pickupLocation: bookingInfo.dropOffStop.location,
-        dropOffLocation: bookingInfo.pickupStop.location,
+        pickupLocation: bookingInfo.pickupStop.location,
+        dropOffLocation: bookingInfo.dropOffStop.location,
         amount: bookingInfo.payment.amount * bookingInfo.quantity,
         departureTime: bookingInfo.schedule.departureTime.toLocaleDateString('en-US'),
         seats: bookingInfo.seats.map((seat) => seat.seatNumber).join(', '),
