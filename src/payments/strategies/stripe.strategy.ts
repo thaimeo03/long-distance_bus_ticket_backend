@@ -4,13 +4,17 @@ import Stripe from 'stripe'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Booking } from 'src/bookings/entities/booking.entity'
+import { ConfigService } from '@nestjs/config'
 const stripe = new Stripe(
   'sk_test_51PuI8S04HawVqBs75w181D3qfyEnqDjPEInrVqUSNpp6MRYCMdK1vHjHwtivLyeCoo78Z7VDFEIT1Trz1N2DxyYD00kPSCNQsC'
 )
 
 @Injectable()
 export class StripeStrategy implements PaymentStrategy {
-  constructor(@InjectRepository(Booking) private bookingRepository: Repository<Booking>) {}
+  constructor(
+    @InjectRepository(Booking) private bookingRepository: Repository<Booking>,
+    private configService: ConfigService
+  ) {}
 
   // 1. Check booking exists
   // 2. Get priceStripe
@@ -41,8 +45,8 @@ export class StripeStrategy implements PaymentStrategy {
       ],
       customer_email: booking.user.email,
       mode: 'payment',
-      success_url: `http://localhost:9999/payments/callback?success=true&bookingId=${bookingId}`,
-      cancel_url: `http://localhost:9999/payments/callback?success=false&bookingId=${bookingId}`
+      success_url: `${this.configService.get('HOST')}/payments/callback?success=1&bookingId=${bookingId}`,
+      cancel_url: `${this.configService.get('HOST')}/payments/callback?success=0&bookingId=${bookingId}`
     })
 
     return session.url

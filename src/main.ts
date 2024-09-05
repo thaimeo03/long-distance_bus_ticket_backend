@@ -16,8 +16,8 @@ async function bootstrap() {
   app.enableCors()
 
   // For seeding data
-  const dataService = app.get(DataService)
-  await dataService.seedData()
+  // const dataService = app.get(DataService)
+  // await dataService.seedData()
 
   await app.listen(port)
 }

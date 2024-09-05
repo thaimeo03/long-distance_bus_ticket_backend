@@ -28,6 +28,6 @@ export class PaymentsController {
     const data = await this.paymentsService.callBack(query)
 
     if (data === true) res.redirect(this.configService.get('CLIENT_URL') + '/payment/success')
-    res.redirect(this.configService.get('CLIENT_URL') + '/payment/fail')
+    else res.redirect(this.configService.get('CLIENT_URL') + '/payment/fail')
   }
 }

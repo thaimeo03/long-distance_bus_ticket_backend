@@ -1,0 +1,47 @@
+<html lang='en'>
+
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Ticket Information</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; margin: 0; padding: 20px; }
+      .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px;
+      box-shadow: 0 0 10px rgb(216, 78, 85); } .header { text-align: center; margin-bottom: 20px; } .header h1 { margin:
+      0; color: rgb(216, 78, 85); } .details { margin-bottom: 20px; } .details h2 { margin-bottom: 10px; color:
+      rgb(80,180,120); } .details p { margin: 5px 0; } .details .field { font-weight: bold; } .footer { text-align:
+      center; color: #888; margin-top: 20px; }
+    </style>
+  </head>
+
+  <body>
+    <div class='container'>
+      <div class='header'>
+        <h1>Thông tin vé đặt</h1>
+      </div>
+
+      <div class='details'>
+        <h2>Chi tiết thông tin đặt</h2>
+        <p><span class='field'>Họ và tên:</span> {{fullName}}</p>
+        <p><span class='field'>Tuổi:</span> {{age}}</p>
+        <p><span class='field'>Số điện thoại:</span> {{phoneNumber}}</p>
+        <p><span class='field'>Số lượng:</span> {{quantity}}</p>
+        <p><span class='field'>Số ghế:</span> {{seats}}</p>
+        <p><span class='field'>Số tiền:</span> {{amount}}₫</p>
+      </div>
+
+      <div class='details'>
+        <h2>Lịch trình</h2>
+        <p><span class='field'>Điểm đón:</span> {{pickupLocation}}</p>
+        <p><span class='field'>Điểm trả:</span> {{dropOffLocation}}</p>
+        <p><span class='field'>Ngày khởi hành:</span> {{departureTime}}</p>
+      </div>
+
+      <div class='footer'>
+        <p>Cảm ơn đã đặt xe tại website chúng tôi!</p>
+        <p>Chúc bạn có chuyến đi tốt đẹp.</p>
+      </div>
+    </div>
+  </body>
+
+</html>

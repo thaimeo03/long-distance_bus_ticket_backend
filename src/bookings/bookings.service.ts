@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Booking } from './entities/booking.entity'
@@ -23,6 +23,7 @@ export class BookingsService {
     @InjectRepository(RouteStop) private routeStopRepository: Repository<RouteStop>,
     private usersService: UsersService,
     private seatsService: SeatsService,
+    @Inject(forwardRef(() => PaymentsService))
     private paymentsService: PaymentsService,
     private pricesService: PricesService
   ) {}
@@ -109,5 +110,39 @@ export class BookingsService {
     )
 
     this.logger.log(`Removed ${removedBookings.length} bookings.`)
+  }
+
+  async getBookingInfo(bookingId: string) {
+    const bookingInfo = await this.bookingRepository.findOne({
+      relations: ['seats', 'schedule', 'user', 'payment', 'pickupStop', 'dropOffStop'],
+      where: { id: bookingId },
+      select: {
+        id: true,
+        quantity: true,
+        user: {
+          fullName: true,
+          age: true,
+          email: true,
+          phoneNumber: true
+        },
+        seats: {
+          seatNumber: true
+        },
+        payment: {
+          amount: true
+        },
+        pickupStop: {
+          location: true
+        },
+        dropOffStop: {
+          location: true
+        },
+        schedule: {
+          departureTime: true
+        }
+      }
+    })
+
+    return bookingInfo
   }
 }

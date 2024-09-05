@@ -20,7 +20,8 @@ import { BusesModule } from './buses/buses.module'
 import { SeatsModule } from './seats/seats.module'
 import { PaymentsModule } from './payments/payments.module'
 import { ScheduleModule } from '@nestjs/schedule'
-import { PricesModule } from './prices/prices.module';
+import { PricesModule } from './prices/prices.module'
+import { MailsModule } from './mails/mails.module'
 
 @Module({
   imports: [
@@ -38,7 +39,8 @@ import { PricesModule } from './prices/prices.module';
     BusesModule,
     SeatsModule,
     PaymentsModule,
-    PricesModule
+    PricesModule,
+    MailsModule
   ],
   controllers: [AppController],
   providers: [AppService, DataService]
