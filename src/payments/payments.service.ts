@@ -64,7 +64,7 @@ export class PaymentsService {
       await this.paymentRepository.update({ id: payment.id }, { paymentStatus: true, paymentDate: new Date() })
       // 3
       const bookingInfo = await this.bookingsService.getBookingInfo(bookingId)
-      const code = bookingInfo.id.split[0]
+      const code = bookingInfo.id.split('-')[0]
 
       await this.mailsService.sendTicketInfo({
         code: code,
