@@ -9,8 +9,10 @@ export const dataSourceOptions: DataSourceOptions = {
   port: +process.env.DB_PORT,
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
-  url: process.env.DB_URL,
   database: process.env.DB_NAME,
+  ssl: {
+    rejectUnauthorized: false
+  },
   entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/database/migrations/*{.ts,.js}'],
   synchronize: false

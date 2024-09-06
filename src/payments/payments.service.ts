@@ -102,4 +102,10 @@ export class PaymentsService {
 
     strategy.inActivePayment(processPaymentDto.bookingId)
   }
+
+  async refunds(payment: Payment) {
+    const strategy = await this.paymentStrategyFactory.createPaymentStrategy(payment.method)
+
+    await strategy.refunds(payment)
+  }
 }

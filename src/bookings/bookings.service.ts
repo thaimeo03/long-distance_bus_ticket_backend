@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Booking } from './entities/booking.entity'
@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config'
 import { Cron } from '@nestjs/schedule'
 import { PaymentsService } from 'src/payments/payments.service'
 import { PricesService } from 'src/prices/prices.service'
+import { CancelBookingDto } from './dto/cancel-booking.dto'
 
 @Injectable()
 export class BookingsService {
@@ -98,14 +99,7 @@ export class BookingsService {
     // 2 and 3
     const removedBookings = await Promise.all(
       bookings.map(async (booking) => {
-        await this.seatsService.unBookSeats({
-          seats: booking.seats.map((seat) => seat.seatNumber),
-          busId: booking.schedule.bus.id
-        })
-
-        await this.paymentsService.inActivePayment({ bookingId: booking.id, method: booking.payment.method })
-        await this.bookingRepository.remove(booking)
-        return await this.paymentsService.deletePayment(booking.payment.id)
+        return await this.removeBooking(booking)
       })
     )
 
@@ -144,5 +138,54 @@ export class BookingsService {
     })
 
     return bookingInfo
+  }
+
+  // 1. Find booking
+  // 2. Check out due time (hours)
+  // 3. Remove booking
+  // 4. Refund
+  async cancelBooking(cancelBookingDto: CancelBookingDto) {
+    // 1
+    const { email, ticketCode } = cancelBookingDto
+
+    const booking = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.payment', 'payment')
+      .leftJoinAndSelect('booking.user', 'user')
+      .leftJoinAndSelect('booking.seats', 'seats')
+      .leftJoinAndSelect('booking.schedule', 'schedule')
+      .leftJoinAndSelect('schedule.bus', 'bus')
+      .where('CAST(booking.id AS TEXT) LIKE :ticketCode', { ticketCode: `${ticketCode}%` })
+      .andWhere('user.email = :email', { email })
+      .getOne()
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found')
+    }
+
+    if (!booking.payment.paymentStatus) {
+      throw new BadRequestException('Payment is not success')
+    }
+
+    // 2
+    const dueTime = this.configService.get('BOOKING_CANCEL_TIME') // 24 hours
+
+    if (booking.schedule.departureTime.getTime() < Date.now() + dueTime * 60 * 60 * 1000) {
+      throw new BadRequestException('Booking is due to be canceled')
+    }
+
+    // 3 and 4
+    await Promise.all([await this.removeBooking(booking), await this.paymentsService.refunds(booking.payment)])
+  }
+
+  async removeBooking(booking: Booking) {
+    await this.seatsService.unBookSeats({
+      seats: booking.seats.map((seat) => seat.seatNumber),
+      busId: booking.schedule.bus.id
+    })
+
+    await this.paymentsService.inActivePayment({ bookingId: booking.id, method: booking.payment.method })
+    await this.bookingRepository.remove(booking)
+    return await this.paymentsService.deletePayment(booking.payment.id)
   }
 }

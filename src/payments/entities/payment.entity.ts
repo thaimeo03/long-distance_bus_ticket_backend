@@ -7,6 +7,9 @@ export class Payment {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  sessionId: string
+
   @Column({ type: 'boolean', default: false })
   paymentStatus: boolean
 
