@@ -119,9 +119,7 @@ export class BookingsService {
           email: true,
           phoneNumber: true
         },
-        seats: {
-          seatNumber: true
-        },
+        seats: true,
         payment: {
           amount: true
         },
