@@ -1,45 +1,45 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, Param, Body, Req, Query } from '@nestjs/common'
 import { AdminService } from './admin.service'
 import { UserInfoDto } from './dto/user-info.dto'
-import { CreateUserDto } from './dto/create-user.dto'
-import { UpdateUserDto } from './dto/update-user.dto'
+import { BusInfoDto } from './dto/bus-info.dto'
+//    Add some
+import { UpdateRoleDto } from './dto/update-role.dto'
+import { FilterUserDto } from './dto/filter-user.dto'
+import { FilterBusDto } from './dto/filter-bus.dto'
 
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('users')
-  async getAllUsers(): Promise<UserInfoDto[]> {
-    return await this.adminService.getAllUsers()
+  async getAllUsers(@Req() req: Request, @Query() filterUserDto: FilterUserDto) {
+    const adminId = req['user'].id
+
+		return await this.adminService.findAllUsers({adminId, filterUserDto})
   }
 
-  @Get('user/:id')
-  async getUserInfo(@Param('id') id: string): Promise<UserInfoDto> {
-    return await this.adminService.getUserById(id)
+  @Get('buses')
+  async getAllBuses(@Query() filterBusDto: FilterBusDto) {
+    return await this.adminService.findAllBuses(filterBusDto)
   }
 
   @Put('user/:id')
-  async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<UserInfoDto> {
-    return await this.adminService.updateUser(id, updateUserDto)
-  }
-
-  @Delete('user/:id')
-  async deleteUser(@Param('id') id: string): Promise<void> {
-    return await this.adminService.deleteUser(id)
+  async updateRole(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
+    return await this.adminService.updateRole({id, updateRoleDto})
   }
 
   @Get('report/users')
-  getUserCount() {
+  async getUserCount() {
     return this.adminService.getUserCount()
   }
 
   @Get('report/bus-companies')
-  getBusCompanyCount() {
+  async getBusCompanyCount() {
     return this.adminService.getBusCompanyCount()
   }
 
   @Get('report/active-buses')
-  getActiveBusCount() {
+  async getActiveBusCount() {
     return this.adminService.getActiveBusCount()
   }
 }

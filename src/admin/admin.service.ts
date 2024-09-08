@@ -2,14 +2,16 @@ import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nest
 import { InjectRepository } from '@nestjs/typeorm'
 import { User } from 'src/users/entities/user.entity'
 import { FindOptionsWhere, Like, Repository } from 'typeorm'
-import { ResponseData, ResponseDataWithPagination } from 'common/customs/responseData'
-import { FilterUserDto } from './dto/filter-blogger.dto'
-import { FilterBusDto } from './dto/filter-blog.dto'
-import { Bus } from 'src/buses/entities/blog.entity'
-import { Bus_Status } from 'common/enums/buses.enum'
+//      Add some
+import { ResponseData, ResponseDataWithPagination } from 'common/core/response-success.dto'
+import { FilterUserDto } from './dto/filter-user.dto'
+import { FilterBusDto } from './dto/filter-bus.dto'
+import { Bus } from 'src/buses/entities/bus.entity'
+import { BusStatus } from 'common/enums/buses.enum'
 import { Cron } from '@nestjs/schedule'
 import { UpdateRoleDto } from './dto/update-role.dto'
 import { Role } from 'common/enums/users.enum'
+import { BusCompany } from 'src/bus-companies/entities/bus-company.entity'
 
 @Injectable()
 export class AdminService {
@@ -17,7 +19,8 @@ export class AdminService {
 
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    @InjectRepository(Bus) private readonly busesRepository: Repository<Bus>
+    @InjectRepository(Bus) private readonly busesRepository: Repository<Bus>,
+    @InjectRepository(BusCompany) private readonly busCompaniesRepository: Repository<BusCompany>
   ) {}
 
   async findAllUsers({ adminId, filterUserDto }: { adminId: string; filterUserDto: FilterUserDto }) {
@@ -29,7 +32,7 @@ export class AdminService {
     const searchNameTermQuery = searchNameTerm ? Like(`%${searchNameTerm}%`) : undefined
 
     const whereQuery: FindOptionsWhere<User> | FindOptionsWhere<User>[] = {
-      name: searchNameTermQuery
+      fullName: searchNameTermQuery
     }
 
     // Get bloggers by filters
@@ -37,14 +40,15 @@ export class AdminService {
       where: whereQuery,
       select: {
         id: true,
-        name: true,
+        fullName: true,
         email: true,
         sex: true,
         dateOfBirth: true,
         role: true
       },
       order: {
-        createdAt: 'DESC'
+        // createdAt: 'DESC'
+        fullName: 'DESC'
       },
       take: limitQuery,
       skip: (pageQuery - 1) * limitQuery
@@ -60,7 +64,7 @@ export class AdminService {
     )
 
     return new ResponseDataWithPagination({
-      message: 'Get all bloggers successfully',
+      message: 'Get all users successfully',
       data: usersWithoutThisAdmin,
       pagination: {
         limit: +limitQuery,
@@ -92,7 +96,8 @@ export class AdminService {
         },
       },
       order: {
-        createdAt: 'DESC'
+        // createdAt: 'DESC'
+        name: 'DESC'
       },
       take: limitQuery,
       skip: (pageQuery - 1) * limitQuery
@@ -116,7 +121,7 @@ export class AdminService {
   }
 
   async updateRole({ id, updateRoleDto }: { id: string; updateRoleDto: UpdateRoleDto }) {
-    const user = await this.bloggersRepository.findOneBy({ id })
+    const user = await this.usersRepository.findOneBy({ id })
 
     if (!user) {
       throw new NotFoundException('User not found')
@@ -183,13 +188,16 @@ export class AdminService {
       let busesIsMaintenance = 0
 
     for (const bus of buses) {
-        if (bus.status === Bus_Status.Ready) {
+        if (bus.status === BusStatus.Ready) {
             busesIsReady++
-        } else if (bus.status === Bus_Status.EnRoute) {
+        } 
+        else if (bus.status === BusStatus.EnRoute) {
             busesIsEnRoute++
-        } else if (bus.status === bus_Status.Arrived) {
+        } 
+        else if (bus.status === BusStatus.Arrived) {
             busesIsArrived++
-      }else if(bus.status === Bus_Status.Maintenance) {
+        }
+        else if(bus.status === BusStatus.Maintenance) {
             busesIsMaintenance++
       }
     }
@@ -205,11 +213,24 @@ export class AdminService {
     })
   }
 
-  // Task scheduling
-  @Cron('0 */30 * * * *') // Every 30 minutes
-  async deleteMaintenanceBuses() {
-    this.logger.log('Deleting maintenance buses...')
-
-    await this.busesRepository.delete({ status: Bus_Status.Maintenance })
+  async getUserCount() {
+    return this.usersRepository.findAndCount();
   }
+
+  async getBusCompanyCount() {
+    return this.busCompaniesRepository.findAndCount();
+  }
+  
+  async getActiveBusCount() {
+    return this.busesRepository.findAndCount();
+  }
+
+  // Task scheduling
+  // @Cron('0 */30 * * * *') // Every 30 minutes
+
+  // async deleteMaintenanceBuses() {
+  //   this.logger.log('Deleting maintenance buses...')
+
+  //   await this.busesRepository.delete({ status: BusStatus.Maintenance })
+  // }
 }

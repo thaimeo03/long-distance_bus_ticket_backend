@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer'
 import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator'
-import { Bus_Status } from 'common/enums/buses.enum'
+import { BusStatus } from 'common/enums/buses.enum'
 
 export class FilterBusDto {
   @IsOptional()
@@ -14,6 +14,6 @@ export class FilterBusDto {
   page?: number
 
   @IsOptional()
-  @IsEnum(Bus_Status)
-  status?: Bus_Status
+  @IsEnum(BusStatus)
+  status?: BusStatus
 }
