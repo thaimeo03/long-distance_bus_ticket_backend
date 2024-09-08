@@ -75,16 +75,9 @@ export class UsersService {
     return { accessToken, refreshToken }
   }
 
-  // 1. Find user by refresh token
-  // 2. Update refresh token is null
-  async logout(refreshToken: string) {
-    // 1
-    if (!refreshToken) throw new UnauthorizedException()
-    const user = await this.userRepository.findOneBy({ refreshToken })
-    if (!user) throw new UnauthorizedException()
-
-    // 2
-    await this.userRepository.update({ id: user.id }, { refreshToken: null })
+  // 1. Update refresh token is null by user id
+  async logout(userId: string) {
+    await this.userRepository.update({ id: userId }, { refreshToken: null })
   }
 
   // 1. Check user exists. If not, create one.

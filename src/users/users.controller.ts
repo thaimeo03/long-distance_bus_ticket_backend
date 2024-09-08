@@ -31,10 +31,11 @@ export class UsersController {
   }
 
   @Post('logout')
+  @UseGuards(AuthGuardJwt)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = req.cookies['refresh_token'] as string
+    const userId = req.user['userId'] as string
 
-    await this.usersService.logout(refreshToken)
+    await this.usersService.logout(userId)
 
     // Clear cookie
     res.clearCookie('access_token')
