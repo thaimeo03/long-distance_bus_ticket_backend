@@ -12,6 +12,7 @@ import { Cron } from '@nestjs/schedule'
 import { UpdateRoleDto } from './dto/update-role.dto'
 import { Role } from 'common/enums/users.enum'
 import { BusCompany } from 'src/bus-companies/entities/bus-company.entity'
+import { Payment } from 'src/payments/entities/payment.entity'
 
 @Injectable()
 export class AdminService {
@@ -20,7 +21,8 @@ export class AdminService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     @InjectRepository(Bus) private readonly busesRepository: Repository<Bus>,
-    @InjectRepository(BusCompany) private readonly busCompaniesRepository: Repository<BusCompany>
+    @InjectRepository(BusCompany) private readonly busCompaniesRepository: Repository<BusCompany>,
+    @InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>
   ) {}
 
   async findAllUsers({ adminId, filterUserDto }: { adminId: string; filterUserDto: FilterUserDto }) {
@@ -87,13 +89,13 @@ export class AdminService {
     const buses = await this.busesRepository.find({
       where: whereQuery,
       select: {
-          id: true,
-          name: true,
-          busNumber: true,
-          status: true,
-          busCompany: {
-            name: true
-        },
+        id: true,
+        name: true,
+        busNumber: true,
+        status: true,
+        busCompany: {
+          name: true
+        }
       },
       order: {
         // createdAt: 'DESC'
@@ -127,7 +129,7 @@ export class AdminService {
       throw new NotFoundException('User not found')
     }
 
-      if (user.role === Role.Admin) {
+    if (user.role === Role.Admin) {
       throw new ForbiddenException('You can not change the role of a user who is admin')
     }
 
@@ -141,88 +143,111 @@ export class AdminService {
     })
   }
 
-//   async analyzeUserQuantityCreated() {
-//     const startOfWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-//     startOfWeek.setHours(0, 0, 0, 0)
+  //   async analyzeUserQuantityCreated() {
+  //     const startOfWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  //     startOfWeek.setHours(0, 0, 0, 0)
 
-//     const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000)
+  //     const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000)
 
-//     const result: any = await this.bloggersRepository.query(
-//       `SELECT DATE(createdAt) AS date, COUNT(*) AS quantity 
-//       FROM blogger 
-//       WHERE createdAt >= '${startOfWeek.toISOString()}' 
-//       AND createdAt < '${endOfWeek.toISOString()}' 
-//       GROUP BY DATE(createdAt)`
-//     )
+  //     const result: any = await this.bloggersRepository.query(
+  //       `SELECT DATE(createdAt) AS date, COUNT(*) AS quantity
+  //       FROM blogger
+  //       WHERE createdAt >= '${startOfWeek.toISOString()}'
+  //       AND createdAt < '${endOfWeek.toISOString()}'
+  //       GROUP BY DATE(createdAt)`
+  //     )
 
-//     const blogsQuantityInLastWeek = {
-//       monday: 0,
-//       tuesday: 0,
-//       wednesday: 0,
-//       thursday: 0,
-//       friday: 0,
-//       saturday: 0,
-//       sunday: 0
-//     }
+  //     const blogsQuantityInLastWeek = {
+  //       monday: 0,
+  //       tuesday: 0,
+  //       wednesday: 0,
+  //       thursday: 0,
+  //       friday: 0,
+  //       saturday: 0,
+  //       sunday: 0
+  //     }
 
-//     for (const row of result) {
-//       const day = new Date(row.date).getDay()
-//       const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-//       blogsQuantityInLastWeek[days[day]] += +row.quantity
-//     }
+  //     for (const row of result) {
+  //       const day = new Date(row.date).getDay()
+  //       const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  //       blogsQuantityInLastWeek[days[day]] += +row.quantity
+  //     }
 
-//     return new ResponseData({
-//       message: 'Get blogger quantity created successfully',
-//       data: {
-//         blogsQuantityInLastWeek
-//       }
-//     })
-//   }
+  //     return new ResponseData({
+  //       message: 'Get blogger quantity created successfully',
+  //       data: {
+  //         blogsQuantityInLastWeek
+  //       }
+  //     })
+  //   }
 
   async analyzeBusStatus() {
-      const buses = await this.busesRepository.find()
+    const buses = await this.busesRepository.find()
 
-      let busesIsReady = 0
-      let busesIsEnRoute = 0
-      let busesIsArrived = 0
-      let busesIsMaintenance = 0
+    let busesIsReady = 0
+    let busesIsEnRoute = 0
+    let busesIsArrived = 0
+    let busesIsMaintenance = 0
 
     for (const bus of buses) {
-        if (bus.status === BusStatus.Ready) {
-            busesIsReady++
-        } 
-        else if (bus.status === BusStatus.EnRoute) {
-            busesIsEnRoute++
-        } 
-        else if (bus.status === BusStatus.Arrived) {
-            busesIsArrived++
-        }
-        else if(bus.status === BusStatus.Maintenance) {
-            busesIsMaintenance++
+      if (bus.status === BusStatus.Ready) {
+        busesIsReady++
+      } else if (bus.status === BusStatus.EnRoute) {
+        busesIsEnRoute++
+      } else if (bus.status === BusStatus.Arrived) {
+        busesIsArrived++
+      } else if (bus.status === BusStatus.Maintenance) {
+        busesIsMaintenance++
       }
     }
 
     return new ResponseData({
       message: 'Get blog statuses successfully',
       data: {
-          busesIsReady,
-          busesIsEnRoute,
-          busesIsArrived,
-          busesIsMaintenance
+        busesIsReady,
+        busesIsEnRoute,
+        busesIsArrived,
+        busesIsMaintenance
       }
     })
   }
 
   async getUserCount() {
-    return this.usersRepository.findAndCount();
+    return this.usersRepository.count()
   }
 
   async getBusCompanyCount() {
-    return this.busCompaniesRepository.findAndCount();
+    return this.busCompaniesRepository.count()
   }
-  
+
   async getActiveBusCount() {
-    return this.busesRepository.findAndCount();
+    return this.busesRepository.count({ where: { status: BusStatus.Ready } })
+  }
+
+  async analyzeSalesInMonth() {
+    return await this.paymentRepository
+      .createQueryBuilder('payment')
+      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+      .addSelect('EXTRACT(WEEK FROM payment.paymentDate)', 'week')
+      .addSelect('SUM(payment.amount)', 'totalAmount')
+      .groupBy('year')
+      .addGroupBy('week')
+      .orderBy('year')
+      .addOrderBy('week')
+      .getRawMany()
+  }
+
+  async analyzeSalesInWeek() {
+    return await this.paymentRepository
+      .createQueryBuilder('payment')
+      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+      .addSelect('EXTRACT(MONTH FROM payment.paymentDate)', 'month')
+      .addSelect('SUM(payment.amount)', 'totalAmount')
+      .groupBy('year')
+      .addGroupBy('month')
+      .orderBy('year')
+      .addOrderBy('month')
+      .getRawMany()
   }
 
   // Task scheduling

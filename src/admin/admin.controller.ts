@@ -15,7 +15,7 @@ export class AdminController {
   async getAllUsers(@Req() req: Request, @Query() filterUserDto: FilterUserDto) {
     const adminId = req['user'].id
 
-		return await this.adminService.findAllUsers({adminId, filterUserDto})
+    return await this.adminService.findAllUsers({ adminId, filterUserDto })
   }
 
   @Get('buses')
@@ -25,7 +25,7 @@ export class AdminController {
 
   @Put('user/:id')
   async updateRole(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return await this.adminService.updateRole({id, updateRoleDto})
+    return await this.adminService.updateRole({ id, updateRoleDto })
   }
 
   @Get('report/users')
@@ -41,5 +41,15 @@ export class AdminController {
   @Get('report/active-buses')
   async getActiveBusCount() {
     return this.adminService.getActiveBusCount()
+  }
+
+  @Get('report/analyze-in-month')
+  async analyzeBusInMonth() {
+    return await this.adminService.analyzeSalesInMonth()
+  }
+
+  @Get('report/analyze-in-week')
+  async analyzeBusInWeek() {
+    return await this.adminService.analyzeSalesInWeek()
   }
 }
