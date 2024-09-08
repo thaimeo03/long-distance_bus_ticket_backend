@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from './entities/user.entity'
@@ -6,6 +6,7 @@ import { CreateUserDraftDto } from './dto/create-user-draft.dto'
 import { RegisterDto } from './dto/register.dto'
 import { AuthService } from 'src/auth/auth.service'
 import * as bcrypt from 'bcrypt'
+import { LoginDto } from './dto/login.dto'
 
 @Injectable()
 export class UsersService {
@@ -47,6 +48,43 @@ export class UsersService {
     await this.userRepository.save(newUser)
 
     return { accessToken, refreshToken }
+  }
+
+  // 1. Check email exists
+  // 2. Check password
+  // 3. Generate token (access token, refresh token) taken from auth service
+  // 4. Save new refresh token and return token
+  async login(loginDto: LoginDto) {
+    // 1
+    const user = await this.userRepository.findOneBy({
+      email: loginDto.email
+    })
+
+    if (!user || user.isDraft) throw new BadRequestException('Email or password is incorrect')
+
+    // 2
+    const isMatch = await bcrypt.compare(loginDto.password, user.passwordHashed)
+    if (!isMatch) throw new BadRequestException('Email or password is incorrect')
+
+    // 3
+    const { accessToken, refreshToken } = await this.authService.generateToken(user.id)
+
+    // 4
+    await this.userRepository.update({ id: user.id }, { refreshToken })
+
+    return { accessToken, refreshToken }
+  }
+
+  // 1. Find user by refresh token
+  // 2. Update refresh token is null
+  async logout(refreshToken: string) {
+    // 1
+    if (!refreshToken) throw new UnauthorizedException()
+    const user = await this.userRepository.findOneBy({ refreshToken })
+    if (!user) throw new UnauthorizedException()
+
+    // 2
+    await this.userRepository.update({ id: user.id }, { refreshToken: null })
   }
 
   // 1. Check user exists. If not, create one.
