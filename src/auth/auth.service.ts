@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
+import { InjectRepository } from '@nestjs/typeorm'
+import { User } from 'src/users/entities/user.entity'
+import { Repository } from 'typeorm'
 
 @Injectable()
 export class AuthService {
@@ -9,7 +12,8 @@ export class AuthService {
 
   constructor(
     private configService: ConfigService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    @InjectRepository(User) private userRepository: Repository<User>
   ) {}
 
   async generateToken(userId: string) {
@@ -47,7 +51,13 @@ export class AuthService {
     )
   }
 
+  // 1. Get new access token, refresh token
+  // 2. Save new refresh token
   async refreshToken(userId: string) {
-    return await this.generateToken(userId)
+    const { accessToken, refreshToken } = await this.generateToken(userId)
+
+    await this.userRepository.update({ id: userId }, { refreshToken })
+
+    return { accessToken, refreshToken }
   }
 }
