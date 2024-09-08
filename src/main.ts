@@ -15,7 +15,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe()) // Validation pipe is global
   app.useGlobalFilters(new BaseExceptionFilter(httpAdapter)) // Exception filter is global
   app.use(cookieParser()) // // Add cookie parser
-  app.enableCors()
+  app.enableCors({ origin: ['http://localhost:3000'], credentials: true }) // Enable CORS
 
   // For seeding data
   // const dataService = app.get(DataService)
