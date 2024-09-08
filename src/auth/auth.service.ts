@@ -46,4 +46,8 @@ export class AuthService {
       }
     )
   }
+
+  async refreshToken(userId: string) {
+    return await this.generateToken(userId)
+  }
 }
