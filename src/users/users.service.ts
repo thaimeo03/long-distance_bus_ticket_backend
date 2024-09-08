@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from './entities/user.entity'
@@ -73,6 +73,18 @@ export class UsersService {
     await this.userRepository.update({ id: user.id }, { refreshToken })
 
     return { accessToken, refreshToken }
+  }
+
+  // 1. Find user by refresh token
+  // 2. Update refresh token is null
+  async logout(refreshToken: string) {
+    // 1
+    if (!refreshToken) throw new UnauthorizedException()
+    const user = await this.userRepository.findOneBy({ refreshToken })
+    if (!user) throw new UnauthorizedException()
+
+    // 2
+    await this.userRepository.update({ id: user.id }, { refreshToken: null })
   }
 
   // 1. Check user exists. If not, create one.
