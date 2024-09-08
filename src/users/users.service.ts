@@ -1,12 +1,53 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from './entities/user.entity'
 import { CreateUserDraftDto } from './dto/create-user-draft.dto'
+import { RegisterDto } from './dto/register.dto'
+import { AuthService } from 'src/auth/auth.service'
+import * as bcrypt from 'bcrypt'
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private userRepository: Repository<User>,
+    private authService: AuthService
+  ) {}
+
+  // 1. Check email exists and is not draft
+  // 2. Hash password
+  // 3. Create user
+  // 4. Generate token (access token, refresh token) taken from auth service
+  // 5. Save user and return token
+  async register(registerDto: RegisterDto) {
+    // 1
+    const user = await this.userRepository.findOneBy({
+      email: registerDto.email
+    })
+    if (user && !user.isDraft) throw new BadRequestException('Email already exists')
+
+    // 2
+    const passwordHash = await bcrypt.hash(registerDto.password, 10)
+
+    // 3
+    const newUser = this.userRepository.create({
+      id: crypto.randomUUID(),
+      fullName: registerDto.fullName,
+      phoneNumber: registerDto.phoneNumber,
+      email: registerDto.email,
+      passwordHashed: passwordHash,
+      isDraft: false
+    })
+
+    // 4
+    const { accessToken, refreshToken } = await this.authService.generateToken(newUser.id)
+
+    // 5
+    newUser.refreshToken = refreshToken
+    await this.userRepository.save(newUser)
+
+    return { accessToken, refreshToken }
+  }
 
   // 1. Check user exists. If not, create one.
   async createUserDraft(createUserDraftDto: CreateUserDraftDto): Promise<User> {
