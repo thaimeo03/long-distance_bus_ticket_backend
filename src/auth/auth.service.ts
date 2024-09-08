@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
@@ -51,11 +51,18 @@ export class AuthService {
     )
   }
 
-  // 1. Get new access token, refresh token
-  // 2. Save new refresh token
-  async refreshToken(userId: string) {
+  // 1. Check refresh token
+  // 2. Get new access token, refresh token
+  // 3. Save new refresh token
+  async refreshToken({ userId, oldRefreshToken }: { userId: string; oldRefreshToken: string }) {
+    // 1
+    const user = await this.userRepository.findOneBy({ id: userId })
+    if (user.refreshToken !== oldRefreshToken) throw new UnauthorizedException()
+
+    // 2
     const { accessToken, refreshToken } = await this.generateToken(userId)
 
+    // 3
     await this.userRepository.update({ id: userId }, { refreshToken })
 
     return { accessToken, refreshToken }
