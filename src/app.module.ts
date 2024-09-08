@@ -22,7 +22,8 @@ import { PaymentsModule } from './payments/payments.module'
 import { ScheduleModule } from '@nestjs/schedule'
 import { PricesModule } from './prices/prices.module'
 import { MailsModule } from './mails/mails.module'
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './auth/auth.module'
+import { AdminModule } from './admin/admin.module'
 
 @Module({
   imports: [
@@ -42,7 +43,8 @@ import { AuthModule } from './auth/auth.module';
     PaymentsModule,
     PricesModule,
     MailsModule,
-    AuthModule
+    AuthModule,
+    AdminModule
   ],
   controllers: [AppController],
   providers: [AppService, DataService]
