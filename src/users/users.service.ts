@@ -17,35 +17,51 @@ export class UsersService {
 
   // 1. Check email exists and is not draft
   // 2. Hash password
-  // 3. Create user
+  // 3. Create user or update user with draft
   // 4. Generate token (access token, refresh token) taken from auth service
   // 5. Save user and return token
   async register(registerDto: RegisterDto) {
     // 1
-    const user = await this.userRepository.findOneBy({
-      email: registerDto.email
-    })
-    if (user && !user.isDraft) throw new BadRequestException('Email already exists')
+    let user = await this.userRepository.findOneBy({ email: registerDto.email })
+
+    if (user && !user.isDraft) {
+      throw new BadRequestException('Email already exists')
+    }
 
     // 2
     const passwordHash = await bcrypt.hash(registerDto.password, 10)
 
-    // 3
-    const newUser = this.userRepository.create({
-      id: crypto.randomUUID(),
-      fullName: registerDto.fullName,
-      phoneNumber: registerDto.phoneNumber,
-      email: registerDto.email,
-      passwordHashed: passwordHash,
-      isDraft: false
-    })
+    if (user && user.isDraft) {
+      // 3. Update existing draft user
+      await this.userRepository.update(
+        { id: user.id },
+        {
+          passwordHashed: passwordHash,
+          fullName: registerDto.fullName,
+          phoneNumber: registerDto.phoneNumber,
+          isDraft: false
+        }
+      )
+    } else {
+      // 3. Create a new user if not a draft
+      user = this.userRepository.create({
+        id: crypto.randomUUID(),
+        fullName: registerDto.fullName,
+        phoneNumber: registerDto.phoneNumber,
+        email: registerDto.email,
+        passwordHashed: passwordHash,
+        isDraft: false
+      })
+
+      await this.userRepository.save(user)
+    }
 
     // 4
-    const { accessToken, refreshToken } = await this.authService.generateToken(newUser.id)
+    const { accessToken, refreshToken } = await this.authService.generateToken(user.id)
 
     // 5
-    newUser.refreshToken = refreshToken
-    await this.userRepository.save(newUser)
+    user.refreshToken = refreshToken
+    await this.userRepository.save(user)
 
     return { accessToken, refreshToken }
   }
