@@ -12,8 +12,9 @@ export class AuthController {
   @UseGuards(RefreshTokenGuard)
   async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const userId = req.user['userId'] as string
+    const oldRefreshToken = req.cookies.refresh_token as string
 
-    const { accessToken, refreshToken } = await this.authService.refreshToken(userId)
+    const { accessToken, refreshToken } = await this.authService.refreshToken({ userId, oldRefreshToken })
 
     res.cookie('access_token', accessToken, { httpOnly: true })
     res.cookie('refresh_token', refreshToken, { httpOnly: true })
