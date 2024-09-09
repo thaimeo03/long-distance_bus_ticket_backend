@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from './entities/user.entity'
@@ -92,6 +92,25 @@ export class UsersService {
   // 1. Update refresh token is null by user id
   async logout(userId: string) {
     await this.userRepository.update({ id: userId }, { refreshToken: null })
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: {
+        fullName: true,
+        email: true,
+        phoneNumber: true,
+        age: true,
+        dateOfBirth: true,
+        role: true,
+        sex: true
+      }
+    })
+
+    if (!user) throw new NotFoundException('User not found')
+
+    return user
   }
 
   // 1. Check user exists. If not, create one.

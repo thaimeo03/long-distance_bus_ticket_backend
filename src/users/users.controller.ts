@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { RegisterDto } from './dto/register.dto'
 import { Request, Response } from 'express'
@@ -42,5 +42,15 @@ export class UsersController {
     res.clearCookie('refresh_token')
 
     return new ResponseData({ message: 'Logout successfully' })
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuardJwt)
+  async getProfile(@Req() req: Request) {
+    const userId = req.user['userId'] as string
+
+    const data = await this.usersService.getProfile(userId)
+
+    return new ResponseData({ message: 'Get profile successfully', data })
   }
 }
