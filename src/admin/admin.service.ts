@@ -224,7 +224,7 @@ export class AdminService {
     return this.busesRepository.count({ where: { status: BusStatus.Ready } })
   }
 
-  async analyzeSalesInMonth() {
+  async analyzeSalesInWeek() {
     return await this.paymentRepository
       .createQueryBuilder('payment')
       .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
@@ -237,7 +237,7 @@ export class AdminService {
       .getRawMany()
   }
 
-  async analyzeSalesInWeek() {
+  async analyzeSalesInMonth() {
     return await this.paymentRepository
       .createQueryBuilder('payment')
       .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
