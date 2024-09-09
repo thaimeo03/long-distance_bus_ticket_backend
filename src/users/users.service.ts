@@ -33,15 +33,13 @@ export class UsersService {
 
     if (user && user.isDraft) {
       // 3. Update existing draft user
-      await this.userRepository.update(
-        { id: user.id },
-        {
-          passwordHashed: passwordHash,
-          fullName: registerDto.fullName,
-          phoneNumber: registerDto.phoneNumber,
-          isDraft: false
-        }
-      )
+      user = await this.userRepository.save({
+        ...user,
+        passwordHashed: passwordHash,
+        fullName: registerDto.fullName,
+        phoneNumber: registerDto.phoneNumber,
+        isDraft: false
+      })
     } else {
       // 3. Create a new user if not a draft
       user = this.userRepository.create({
