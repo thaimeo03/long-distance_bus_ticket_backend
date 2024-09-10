@@ -4,6 +4,8 @@ import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
 import { User } from 'src/users/entities/user.entity'
 import { Repository } from 'typeorm'
+import { GoogleProfileDto } from './dto/google-profile.dto'
+import { el } from '@faker-js/faker'
 
 @Injectable()
 export class AuthService {
@@ -64,6 +66,40 @@ export class AuthService {
 
     // 3
     await this.userRepository.update({ id: userId }, { refreshToken })
+
+    return { accessToken, refreshToken }
+  }
+
+  // 1. Find user by email
+  // 2. Create user if not exists
+  // 3. Update draft is false if user exists and is draft
+  // 4. Generate token
+  // 5. Save refresh token and return token
+  async googleOAuthLogin(profile: GoogleProfileDto) {
+    // 1
+    const { email, fullName } = profile
+    let user = await this.userRepository.findOneBy({ email: profile.email })
+
+    // 2
+    if (!user) {
+      user = this.userRepository.create({
+        fullName,
+        email,
+        isDraft: false
+      })
+      user = await this.userRepository.save(user)
+    } else {
+      // 3
+      if (user.isDraft) {
+        await this.userRepository.update({ id: user.id }, { isDraft: false, fullName })
+      }
+    }
+
+    // 4
+    const { accessToken, refreshToken } = await this.generateToken(user.id)
+
+    // 5
+    await this.userRepository.update({ id: user.id }, { refreshToken })
 
     return { accessToken, refreshToken }
   }
