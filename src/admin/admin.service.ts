@@ -88,6 +88,7 @@ export class AdminService {
     // Get blogs by filters
     const buses = await this.busesRepository.find({
       where: whereQuery,
+      relations: ['busCompany'],
       select: {
         id: true,
         name: true,
