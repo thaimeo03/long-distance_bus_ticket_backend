@@ -14,6 +14,8 @@ export class SeatsService {
   // 1. Check bus exists
   // 2. Check seat is available and update it
   async bookSeats({ seats, busId }: { seats: number[]; busId: string }) {
+    if (seats.length === 0) throw new BadRequestException('No seats selected')
+
     const bus = await this.busRepository.findOne({
       where: { id: busId }
     })
