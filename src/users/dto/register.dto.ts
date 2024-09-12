@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator'
+import { IsEmail, IsNumberString, IsString, MinLength } from 'class-validator'
 import { IsMatch } from 'common/decorators/validation.de'
 
 export class RegisterDto {
@@ -11,6 +11,7 @@ export class RegisterDto {
 
   @IsString()
   @MinLength(10)
+  @IsNumberString()
   phoneNumber: string
 
   @IsString()

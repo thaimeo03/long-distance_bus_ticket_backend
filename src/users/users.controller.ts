@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { RegisterDto } from './dto/register.dto'
 import { Request, Response } from 'express'
 import { ResponseData } from 'common/core/response-success.dto'
 import { LoginDto } from './dto/login.dto'
 import { AuthGuardJwt } from 'src/auth/guards/auth.guard'
+import { UpdateUserDto } from './dto/update-user.dto'
 
 @Controller('users')
 export class UsersController {
@@ -52,5 +53,15 @@ export class UsersController {
     const data = await this.usersService.getProfile(userId)
 
     return new ResponseData({ message: 'Get profile successfully', data })
+  }
+
+  @Patch('me')
+  @UseGuards(AuthGuardJwt)
+  async updateProfile(@Req() req: Request, @Body() updateUserDto: UpdateUserDto) {
+    const userId = req.user['userId'] as string
+
+    await this.usersService.updateProfile({ userId, updateUserDto })
+
+    return new ResponseData({ message: 'Update profile successfully' })
   }
 }
