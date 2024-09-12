@@ -7,6 +7,7 @@ import { RegisterDto } from './dto/register.dto'
 import { AuthService } from 'src/auth/auth.service'
 import * as bcrypt from 'bcrypt'
 import { LoginDto } from './dto/login.dto'
+import { UpdateUserDto } from './dto/update-user.dto'
 
 @Injectable()
 export class UsersService {
@@ -120,5 +121,21 @@ export class UsersService {
 
     const newUser = this.userRepository.create(createUserDraftDto)
     return await this.userRepository.save(newUser)
+  }
+
+  // 1. Check user exists. If not, throw error
+  // 2. Update user
+  async updateProfile({ userId, updateUserDto }: { userId: string; updateUserDto: UpdateUserDto }) {
+    const user = await this.userRepository.findOneBy({ id: userId })
+    if (!user) throw new NotFoundException('User not found')
+
+    await this.userRepository.update(
+      { id: userId },
+      {
+        phoneNumber: updateUserDto.phoneNumber,
+        fullName: updateUserDto.fullName,
+        age: updateUserDto.age
+      }
+    )
   }
 }
