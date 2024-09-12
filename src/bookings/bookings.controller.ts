@@ -28,7 +28,7 @@ export class BookingsController {
   @Get('history')
   @UseGuards(AuthGuardJwt)
   async findBookingsByUser(@Req() req: Request, @Query() findBookingByUserDto: FindBookingByUserDto) {
-    const userId = req.user['id'] as string
+    const userId = req.user['userId'] as string
     const data = await this.bookingsService.findBookingsByUser({ userId, findBookingByUserDto })
 
     return new ResponseDataWithPagination({
