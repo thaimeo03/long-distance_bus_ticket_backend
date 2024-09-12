@@ -201,7 +201,7 @@ export class BookingsService {
     const page = findBookingByUserDto.page || 1
 
     const [bookingInfo, count] = await this.bookingRepository.findAndCount({
-      relations: ['seats', 'schedule', 'user', 'payment', 'pickupStop', 'dropOffStop'],
+      relations: ['seats', 'schedule', 'user', 'payment', 'pickupStop', 'dropOffStop', 'schedule.bus'],
       where: { user: { id: userId } },
       skip: (page - 1) * limit,
       take: limit,
@@ -212,6 +212,12 @@ export class BookingsService {
         payment: {
           amount: true
         },
+        user: {
+          fullName: true,
+          age: true,
+          email: true,
+          phoneNumber: true
+        },
         pickupStop: {
           location: true
         },
@@ -219,15 +225,31 @@ export class BookingsService {
           location: true
         },
         schedule: {
-          departureTime: true
+          departureTime: true,
+          bus: {
+            name: true
+          }
         }
       }
     })
 
     if (!bookingInfo) throw new NotFoundException('Booking not found')
 
+    const data = bookingInfo.map((booking) => {
+      return {
+        code: booking.id.split('-')[0],
+        quantity: booking.quantity,
+        amount: booking.payment.amount,
+        seats: booking.seats.map((seat) => seat.seatNumber),
+        pickupLocation: booking.pickupStop.location,
+        dropOffLocation: booking.dropOffStop.location,
+        departureTime: booking.schedule.departureTime,
+        busName: booking.schedule.bus.name
+      }
+    })
+
     return {
-      data: bookingInfo,
+      data,
       pagination: {
         limit,
         current_page: page,
