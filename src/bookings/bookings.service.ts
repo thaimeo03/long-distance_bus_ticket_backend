@@ -12,6 +12,7 @@ import { Cron } from '@nestjs/schedule'
 import { PaymentsService } from 'src/payments/payments.service'
 import { PricesService } from 'src/prices/prices.service'
 import { CancelBookingDto } from './dto/cancel-booking.dto'
+import { FindBookingByUserDto } from './dto/find-booking-by-user.dto'
 
 @Injectable()
 export class BookingsService {
@@ -135,6 +136,8 @@ export class BookingsService {
       }
     })
 
+    if (!bookingInfo) throw new NotFoundException('Booking not found')
+
     return bookingInfo
   }
 
@@ -185,5 +188,51 @@ export class BookingsService {
     await this.paymentsService.inActivePayment({ bookingId: booking.id, method: booking.payment.method })
     await this.bookingRepository.remove(booking)
     return await this.paymentsService.deletePayment(booking.payment.id)
+  }
+
+  async findBookingsByUser({
+    userId,
+    findBookingByUserDto
+  }: {
+    userId: string
+    findBookingByUserDto: FindBookingByUserDto
+  }) {
+    const limit = findBookingByUserDto.limit || 7
+    const page = findBookingByUserDto.page || 1
+
+    const [bookingInfo, count] = await this.bookingRepository.findAndCount({
+      relations: ['seats', 'schedule', 'user', 'payment', 'pickupStop', 'dropOffStop'],
+      where: { user: { id: userId } },
+      skip: (page - 1) * limit,
+      take: limit,
+      select: {
+        id: true,
+        quantity: true,
+        seats: true,
+        payment: {
+          amount: true
+        },
+        pickupStop: {
+          location: true
+        },
+        dropOffStop: {
+          location: true
+        },
+        schedule: {
+          departureTime: true
+        }
+      }
+    })
+
+    if (!bookingInfo) throw new NotFoundException('Booking not found')
+
+    return {
+      data: bookingInfo,
+      pagination: {
+        limit,
+        current_page: page,
+        total_page: Math.ceil(count / limit)
+      }
+    }
   }
 }

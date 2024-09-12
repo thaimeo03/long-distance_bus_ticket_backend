@@ -12,7 +12,7 @@ async function bootstrap() {
   const { httpAdapter } = app.get(HttpAdapterHost)
   const port = configService.get('PORT') || 9999
 
-  app.useGlobalPipes(new ValidationPipe()) // Validation pipe is global
+  app.useGlobalPipes(new ValidationPipe({ transform: true })) // Validation pipe is global
   app.useGlobalFilters(new BaseExceptionFilter(httpAdapter)) // Exception filter is global
   app.use(cookieParser()) // // Add cookie parser
   app.enableCors({ origin: [configService.get('CLIENT_URL')], credentials: true }) // Enable CORS
