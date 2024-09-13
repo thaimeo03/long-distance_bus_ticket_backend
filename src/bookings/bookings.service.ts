@@ -202,13 +202,14 @@ export class BookingsService {
 
     const [bookingInfo, count] = await this.bookingRepository.findAndCount({
       relations: ['seats', 'schedule', 'user', 'payment', 'pickupStop', 'dropOffStop', 'schedule.bus'],
-      where: { user: { id: userId } },
+      where: { user: { id: userId }, payment: { paymentStatus: true } },
       skip: (page - 1) * limit,
       take: limit,
       select: {
         id: true,
         quantity: true,
         seats: true,
+        bookingDate: true,
         payment: {
           amount: true
         },
@@ -230,6 +231,9 @@ export class BookingsService {
             name: true
           }
         }
+      },
+      order: {
+        bookingDate: 'DESC'
       }
     })
 
@@ -244,7 +248,8 @@ export class BookingsService {
         pickupLocation: booking.pickupStop.location,
         dropOffLocation: booking.dropOffStop.location,
         departureTime: booking.schedule.departureTime,
-        busName: booking.schedule.bus.name
+        busName: booking.schedule.bus.name,
+        bookingDate: booking.bookingDate
       }
     })
 
