@@ -13,6 +13,7 @@ import { UpdateRoleDto } from './dto/update-role.dto'
 import { Role } from 'common/enums/users.enum'
 import { BusCompany } from 'src/bus-companies/entities/bus-company.entity'
 import { Payment } from 'src/payments/entities/payment.entity'
+import { Booking } from 'src/bookings/entities/booking.entity'
 
 @Injectable()
 export class AdminService {
@@ -22,7 +23,8 @@ export class AdminService {
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     @InjectRepository(Bus) private readonly busesRepository: Repository<Bus>,
     @InjectRepository(BusCompany) private readonly busCompaniesRepository: Repository<BusCompany>,
-    @InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>
+    @InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(Booking) private readonly bookingRepository: Repository<Booking>
   ) {}
 
   async findAllUsers({ adminId, filterUserDto }: { adminId: string; filterUserDto: FilterUserDto }) {
@@ -238,6 +240,24 @@ export class AdminService {
       .getRawMany()
   }
 
+  async analyzeCompanySalesInWeek(id: string) {
+    return await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
+      .innerJoinAndSelect('booking.seats', 'seats', 'booking.id = seats.bookingId')
+      .innerJoinAndSelect('seats.bus', 'bus', 'bus.id = seats.busId')
+      .innerJoinAndSelect('bus.busCompany', 'busCompany', 'busCompany.id = bus.busCompany')
+      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+      .addSelect('EXTRACT(WEEK FROM payment.paymentDate)', 'week')
+      .addSelect('SUM(payment.amount)', 'totalAmount')
+      .groupBy('year')
+      .addGroupBy('week')
+      .orderBy('year')
+      .addOrderBy('week')
+      .where('busCompany.id = :id', { id })
+      .getRawMany()
+  }
+
   async analyzeSalesInMonth() {
     return await this.paymentRepository
       .createQueryBuilder('payment')
@@ -248,6 +268,24 @@ export class AdminService {
       .addGroupBy('month')
       .orderBy('year')
       .addOrderBy('month')
+      .getRawMany()
+  }
+
+  async analyzeCompanySalesInMonth(id: string) {
+    return await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
+      .innerJoinAndSelect('booking.seats', 'seats', 'booking.id = seats.bookingId')
+      .innerJoinAndSelect('seats.bus', 'bus', 'bus.id = seats.busId')
+      .innerJoinAndSelect('bus.busCompany', 'busCompany', 'busCompany.id = bus.busCompany')
+      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+      .addSelect('EXTRACT(MONTH FROM payment.paymentDate)', 'month')
+      .addSelect('SUM(payment.amount)', 'totalAmount')
+      .groupBy('year')
+      .addGroupBy('month')
+      .orderBy('year')
+      .addOrderBy('month')
+      .where('busCompany.id = :id', { id })
       .getRawMany()
   }
 

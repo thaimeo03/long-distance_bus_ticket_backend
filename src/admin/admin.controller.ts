@@ -52,4 +52,14 @@ export class AdminController {
   async analyzeBusInWeek() {
     return await this.adminService.analyzeSalesInWeek()
   }
+
+  @Get('report/analyze-company-bus-in-week/:id')
+  async analyzeCompanyBusInWeek(@Param('id') id: string) {
+    return await this.adminService.analyzeCompanySalesInWeek(id)
+  }
+
+  @Get('report/analyze-company-bus-in-month/:id')
+  async analyzeCompanyBusInMonth(@Param('id') id: string) {
+    return await this.adminService.analyzeCompanySalesInMonth(id)
+  }
 }
