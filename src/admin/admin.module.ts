@@ -7,9 +7,10 @@ import { BusCompany } from '../bus-companies/entities/bus-company.entity'
 import { Bus } from '../buses/entities/bus.entity'
 import { Payment } from '../payments/entities/payment.entity'
 import { Booking } from '../bookings/entities/booking.entity'
+import { Schedule } from '../schedules/entities/schedule.entity'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, BusCompany, Bus, Payment, Booking])],
+  imports: [TypeOrmModule.forFeature([User, BusCompany, Bus, Payment, Booking, Schedule])],
   controllers: [AdminController],
   providers: [AdminService]
 })

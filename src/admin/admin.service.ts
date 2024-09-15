@@ -14,6 +14,7 @@ import { Role } from 'common/enums/users.enum'
 import { BusCompany } from 'src/bus-companies/entities/bus-company.entity'
 import { Payment } from 'src/payments/entities/payment.entity'
 import { Booking } from 'src/bookings/entities/booking.entity'
+import { Schedule } from 'src/schedules/entities/schedule.entity'
 
 @Injectable()
 export class AdminService {
@@ -24,7 +25,8 @@ export class AdminService {
     @InjectRepository(Bus) private readonly busesRepository: Repository<Bus>,
     @InjectRepository(BusCompany) private readonly busCompaniesRepository: Repository<BusCompany>,
     @InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>,
-    @InjectRepository(Booking) private readonly bookingRepository: Repository<Booking>
+    @InjectRepository(Booking) private readonly bookingRepository: Repository<Booking>,
+    @InjectRepository(Schedule) private readonly scheduleRepository: Repository<Schedule>
   ) {}
 
   async findAllUsers({ adminId, filterUserDto }: { adminId: string; filterUserDto: FilterUserDto }) {
@@ -289,6 +291,17 @@ export class AdminService {
       .getRawMany()
   }
 
+  async analyzeByRoute() {
+    return await this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoin('payment.booking', 'booking')
+      .innerJoin('booking.pickupStop', 'pickupStop')
+      .innerJoin('booking.dropOffStop', 'dropOffStop')
+      .select(["CONCAT(pickupStop.location, ' -> ', dropOffStop.location) AS route", 'COUNT(*) AS count'])
+      .groupBy('route')
+      .getRawMany()
+  }
+
   // Task scheduling
   // @Cron('0 */30 * * * *') // Every 30 minutes
 
@@ -297,4 +310,22 @@ export class AdminService {
 
   //   await this.busesRepository.delete({ status: BusStatus.Maintenance })
   // }
+
+  async analyzeBusDepartureByTimeSlot() {
+    return await this.scheduleRepository
+      .createQueryBuilder('schedule')
+      .innerJoin('schedule.bus', 'bus')
+      .select([
+        `CASE 
+        WHEN EXTRACT(HOUR FROM schedule.departureTime) BETWEEN 0 AND 5 THEN '0h-6h'
+        WHEN EXTRACT(HOUR FROM schedule.departureTime) BETWEEN 6 AND 11 THEN '6h-12h'
+        WHEN EXTRACT(HOUR FROM schedule.departureTime) BETWEEN 12 AND 17 THEN '12h-18h'
+        ELSE '18h-24h'
+      END AS timeSlot`,
+        'COUNT(*) AS departureCount'
+      ])
+      .groupBy('timeSlot')
+      .orderBy('timeSlot')
+      .getRawMany()
+  }
 }

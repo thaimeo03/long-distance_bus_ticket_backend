@@ -62,4 +62,14 @@ export class AdminController {
   async analyzeCompanyBusInMonth(@Param('id') id: string) {
     return await this.adminService.analyzeCompanySalesInMonth(id)
   }
+
+  @Get('report/analyze-by-route')
+  async analyzeByRoute() {
+    return await this.adminService.analyzeByRoute()
+  }
+
+  @Get('report/analyze-bus-departure-by-time-slot')
+  async analyzeBusDepartureByTimeSlot() {
+    return await this.adminService.analyzeBusDepartureByTimeSlot()
+  }
 }
