@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { SchedulesService } from './schedules.service'
 import { ResponseData } from 'common/core/response-success.dto'
 import { FindSchedulesDto } from './dto/find-schedules.dto'
@@ -8,7 +8,7 @@ import { FilterSchedulesDto } from './dto/filter-schedules.dto'
 export class SchedulesController {
   constructor(private schedulesService: SchedulesService) {}
 
-  @Get('find')
+  @Post('find')
   async findSchedules(@Query() findSchedulesDto: FindSchedulesDto, @Body() filterSchedulesDto: FilterSchedulesDto) {
     const data = await this.schedulesService.findSchedules({ findSchedulesDto, filterSchedulesDto })
 
