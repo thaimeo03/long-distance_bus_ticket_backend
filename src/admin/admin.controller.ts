@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Req, Query } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, Param, Body, Req, Query, Res } from '@nestjs/common'
+import { Response } from 'express'
 import { AdminService } from './admin.service'
 import { UserInfoDto } from './dto/user-info.dto'
 import { BusInfoDto } from './dto/bus-info.dto'
@@ -71,5 +72,15 @@ export class AdminController {
   @Get('report/analyze-bus-departure-by-time-slot')
   async analyzeBusDepartureByTimeSlot() {
     return await this.adminService.analyzeBusDepartureByTimeSlot()
+  }
+
+  @Get('report/export-analyze-report-company-bus-in-month/:id')
+  async exportAnalyzeReportCompanySalesInMonth(@Param('id') id: string, @Res() res: Response) {
+    return await this.adminService.exportAnalyzeReportCompanySalesInMonth(id, res)
+  }
+
+  @Get('report/export-analyze-report-company-bus-in-week/:id')
+  async exportAnalyzeReportCompanySalesInWeek(@Param('id') id: string, @Res() res: Response) {
+    return await this.adminService.exportAnalyzeReportCompanySalesInWeek(id, res)
   }
 }

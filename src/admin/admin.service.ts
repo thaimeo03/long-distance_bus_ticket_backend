@@ -333,13 +333,57 @@ export class AdminService {
       .getRawMany()
   }
 
-  async exportAnalyzeCompanySalesInMonthReport(id: string, res: Response) {
-    monthlyRevenue = await analyzeCompanySalesInMonth(id)
+  async exportAnalyzeReportCompanySalesInMonth(id: string, res: Response) {
+    const monthlyRevenue = await this.analyzeCompanySalesInMonth(id)
 
-    // Create workbook and worksheet
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Monthly Revenue')
 
-    
+    worksheet.columns = [
+      { header: 'Year', key: 'year', width: 10 },
+      { header: 'Month', key: 'month', width: 10 },
+      { header: 'Total Revenue', key: 'totalRevenue', width: 15 }
+    ]
+
+    monthlyRevenue.forEach((row) => {
+      worksheet.addRow({
+        year: row.year,
+        month: row.month,
+        totalRevenue: row.totalRevenue
+      })
+    })
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', 'attachment; filename=monthly-revenue.xlsx')
+
+    await workbook.xlsx.write(res)
+    res.end()
+  }
+
+  async exportAnalyzeReportCompanySalesInWeek(id: string, res: Response) {
+    const monthlyRevenue = await this.analyzeCompanySalesInWeek(id)
+
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Weekly Revenue')
+
+    worksheet.columns = [
+      { header: 'Year', key: 'year', width: 10 },
+      { header: 'Week', key: 'week', width: 10 },
+      { header: 'Total Revenue', key: 'totalRevenue', width: 15 }
+    ]
+
+    monthlyRevenue.forEach((row) => {
+      worksheet.addRow({
+        year: row.year,
+        month: row.week,
+        totalRevenue: row.totalRevenue
+      })
+    })
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', 'attachment; filename=weekly-revenue.xlsx')
+
+    await workbook.xlsx.write(res)
+    res.end()
   }
 }
