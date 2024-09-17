@@ -316,8 +316,10 @@ export class AdminService {
   // }
 
   async analyzeBusDepartureByTimeSlot() {
-    return await this.scheduleRepository
-      .createQueryBuilder('schedule')
+    return await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
+      .innerJoinAndSelect('booking.schedule', 'schedule', 'booking.scheduleId = schedule.id')
       .innerJoin('schedule.bus', 'bus')
       .select([
         `CASE 
