@@ -1,4 +1,9 @@
+<<<<<<< .merge_file_dTmogg
 import { Controller, Get, Post, Put, Delete, Param, Body, Req, Query } from '@nestjs/common'
+=======
+import { Controller, Get, Post, Put, Delete, Param, Body, Req, Query, Res } from '@nestjs/common'
+import { Response } from 'express'
+>>>>>>> .merge_file_tjUKil
 import { AdminService } from './admin.service'
 import { UserInfoDto } from './dto/user-info.dto'
 import { BusInfoDto } from './dto/bus-info.dto'
@@ -51,5 +56,35 @@ export class AdminController {
   @Get('report/analyze-in-week')
   async analyzeBusInWeek() {
     return await this.adminService.analyzeSalesInWeek()
+  }
+
+  @Get('report/analyze-company-bus-in-week/:id')
+  async analyzeCompanyBusInWeek(@Param('id') id: string) {
+    return await this.adminService.analyzeCompanySalesInWeek(id)
+  }
+
+  @Get('report/analyze-company-bus-in-month/:id')
+  async analyzeCompanyBusInMonth(@Param('id') id: string) {
+    return await this.adminService.analyzeCompanySalesInMonth(id)
+  }
+
+  @Get('report/analyze-by-route')
+  async analyzeByRoute() {
+    return await this.adminService.analyzeByRoute()
+  }
+
+  @Get('report/analyze-bus-departure-by-time-slot')
+  async analyzeBusDepartureByTimeSlot() {
+    return await this.adminService.analyzeBusDepartureByTimeSlot()
+  }
+
+  @Get('report/export-analyze-report-company-bus-in-month/:id')
+  async exportAnalyzeReportCompanySalesInMonth(@Param('id') id: string, @Res() res: Response) {
+    return await this.adminService.exportAnalyzeReportCompanySalesInMonth(id, res)
+  }
+
+  @Get('report/export-analyze-report-company-bus-in-week/:id')
+  async exportAnalyzeReportCompanySalesInWeek(@Param('id') id: string, @Res() res: Response) {
+    return await this.adminService.exportAnalyzeReportCompanySalesInWeek(id, res)
   }
 }

@@ -1,4 +1,6 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import * as ExcelJS from 'exceljs'
+import { Response } from 'express'
 import { InjectRepository } from '@nestjs/typeorm'
 import { User } from 'src/users/entities/user.entity'
 import { FindOptionsWhere, Like, Repository } from 'typeorm'
@@ -13,6 +15,8 @@ import { UpdateRoleDto } from './dto/update-role.dto'
 import { Role } from 'common/enums/users.enum'
 import { BusCompany } from 'src/bus-companies/entities/bus-company.entity'
 import { Payment } from 'src/payments/entities/payment.entity'
+import { Booking } from 'src/bookings/entities/booking.entity'
+import { Schedule } from 'src/schedules/entities/schedule.entity'
 
 @Injectable()
 export class AdminService {
@@ -22,7 +26,9 @@ export class AdminService {
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     @InjectRepository(Bus) private readonly busesRepository: Repository<Bus>,
     @InjectRepository(BusCompany) private readonly busCompaniesRepository: Repository<BusCompany>,
-    @InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>
+    @InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(Booking) private readonly bookingRepository: Repository<Booking>,
+    @InjectRepository(Schedule) private readonly scheduleRepository: Repository<Schedule>
   ) {}
 
   async findAllUsers({ adminId, filterUserDto }: { adminId: string; filterUserDto: FilterUserDto }) {
@@ -238,6 +244,25 @@ export class AdminService {
       .getRawMany()
   }
 
+  async analyzeCompanySalesInWeek(id: string) {
+    return await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
+      .innerJoinAndSelect('booking.seats', 'seats', 'booking.id = seats.bookingId')
+      .innerJoinAndSelect('seats.bus', 'bus', 'bus.id = seats.busId')
+      .innerJoinAndSelect('bus.busCompany', 'busCompany', 'busCompany.id = bus.busCompany')
+      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+      .addSelect('EXTRACT(WEEK FROM payment.paymentDate)', 'week')
+      .addSelect('SUM(payment.amount)', 'totalAmount')
+      .groupBy('year')
+      .addGroupBy('week')
+      .addGroupBy('busCompany.name')
+      .orderBy('year')
+      .addOrderBy('week')
+      .where('busCompany.id = :id', { id })
+      .getRawMany()
+  }
+
   async analyzeSalesInMonth() {
     return await this.paymentRepository
       .createQueryBuilder('payment')
@@ -251,6 +276,36 @@ export class AdminService {
       .getRawMany()
   }
 
+  async analyzeCompanySalesInMonth(id: string) {
+    return await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
+      .innerJoinAndSelect('booking.seats', 'seats', 'booking.id = seats.bookingId')
+      .innerJoinAndSelect('seats.bus', 'bus', 'bus.id = seats.busId')
+      .innerJoinAndSelect('bus.busCompany', 'busCompany', 'busCompany.id = bus.busCompany')
+      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+      .addSelect('EXTRACT(MONTH FROM payment.paymentDate)', 'month')
+      .addSelect('SUM(payment.amount)', 'totalAmount')
+      .groupBy('year')
+      .addGroupBy('month')
+      .addGroupBy('busCompany.name')
+      .orderBy('year')
+      .addOrderBy('month')
+      .where('busCompany.id = :id', { id })
+      .getRawMany()
+  }
+
+  async analyzeByRoute() {
+    return await this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoin('payment.booking', 'booking')
+      .innerJoin('booking.pickupStop', 'pickupStop')
+      .innerJoin('booking.dropOffStop', 'dropOffStop')
+      .select(["CONCAT(pickupStop.location, ' -> ', dropOffStop.location) AS route", 'COUNT(*) AS count'])
+      .groupBy('route')
+      .getRawMany()
+  }
+
   // Task scheduling
   // @Cron('0 */30 * * * *') // Every 30 minutes
 
@@ -259,4 +314,78 @@ export class AdminService {
 
   //   await this.busesRepository.delete({ status: BusStatus.Maintenance })
   // }
+
+  async analyzeBusDepartureByTimeSlot() {
+    return await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
+      .innerJoinAndSelect('booking.schedule', 'schedule', 'booking.scheduleId = schedule.id')
+      .innerJoin('schedule.bus', 'bus')
+      .select([
+        `CASE 
+        WHEN EXTRACT(HOUR FROM schedule.departureTime) BETWEEN 0 AND 5 THEN '0h-6h'
+        WHEN EXTRACT(HOUR FROM schedule.departureTime) BETWEEN 6 AND 11 THEN '6h-12h'
+        WHEN EXTRACT(HOUR FROM schedule.departureTime) BETWEEN 12 AND 17 THEN '12h-18h'
+        ELSE '18h-24h'
+      END AS timeSlot`,
+        'COUNT(*) AS departureCount'
+      ])
+      .groupBy('timeSlot')
+      .orderBy('timeSlot')
+      .getRawMany()
+  }
+
+  async exportAnalyzeReportCompanySalesInMonth(id: string, res: Response) {
+    const monthlyRevenue = await this.analyzeCompanySalesInMonth(id)
+
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Monthly Revenue')
+
+    worksheet.columns = [
+      { header: 'Year', key: 'year', width: 10 },
+      { header: 'Month', key: 'month', width: 10 },
+      { header: 'Total Revenue', key: 'totalRevenue', width: 15 }
+    ]
+
+    monthlyRevenue.forEach((row) => {
+      worksheet.addRow({
+        year: row.year,
+        month: row.month,
+        totalRevenue: row.totalRevenue
+      })
+    })
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', 'attachment; filename=monthly-revenue.xlsx')
+
+    await workbook.xlsx.write(res)
+    res.end()
+  }
+
+  async exportAnalyzeReportCompanySalesInWeek(id: string, res: Response) {
+    const monthlyRevenue = await this.analyzeCompanySalesInWeek(id)
+
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Weekly Revenue')
+
+    worksheet.columns = [
+      { header: 'Year', key: 'year', width: 10 },
+      { header: 'Week', key: 'week', width: 10 },
+      { header: 'Total Revenue', key: 'totalRevenue', width: 15 }
+    ]
+
+    monthlyRevenue.forEach((row) => {
+      worksheet.addRow({
+        year: row.year,
+        month: row.week,
+        totalRevenue: row.totalRevenue
+      })
+    })
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', 'attachment; filename=weekly-revenue.xlsx')
+
+    await workbook.xlsx.write(res)
+    res.end()
+  }
 }
