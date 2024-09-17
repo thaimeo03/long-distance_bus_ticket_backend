@@ -24,6 +24,7 @@ import { PricesModule } from './prices/prices.module'
 import { MailsModule } from './mails/mails.module'
 import { AuthModule } from './auth/auth.module'
 import { AdminModule } from './admin/admin.module'
+import { BusCompaniesModule } from './bus-companies/bus-companies.module';
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { AdminModule } from './admin/admin.module'
     PricesModule,
     MailsModule,
     AuthModule,
-    AdminModule
+    AdminModule,
+    BusCompaniesModule
   ],
   controllers: [AppController],
   providers: [AppService, DataService]

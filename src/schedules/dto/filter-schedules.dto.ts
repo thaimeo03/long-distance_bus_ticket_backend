@@ -31,8 +31,8 @@ export class FilterSchedulesDto {
   periodArrivals?: IPeriodTime[]
 
   @IsOptional()
-  @IsUUID()
-  companyId?: string[]
+  @IsArray()
+  companyIds?: string[]
 
   @IsOptional()
   @IsEnum(ScheduleSortBy)
