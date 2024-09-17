@@ -81,33 +81,34 @@ export class SchedulesService {
     schedulesMatching: GetAvailableScheduleDto[],
     filterSchedulesDto: FilterSchedulesDto
   ): Promise<GetAvailableScheduleDto[]> {
-    const { periodDepartures, periodArrivals, sortBy, sortOrder } = filterSchedulesDto
+    const { periodDepartures, periodArrivals, sortBy, sortOrder, companyIds } = filterSchedulesDto
 
     // Filter
     const res = schedulesMatching.filter((schedule) => {
       const conditions: boolean[] = []
       // Check if departure schedule is in time range
-      conditions.push(
-        this.isInDateTimeRange({
-          dateTime: schedule.schedules[0].departureTime,
-          periods: periodDepartures
-        })
-      )
+      if (periodDepartures)
+        conditions.push(
+          this.isInDateTimeRange({
+            dateTime: schedule.schedules[0].departureTime,
+            periods: periodDepartures
+          })
+        )
       // Check if arrival schedule is in time range
-      conditions.push(
-        this.isInDateTimeRange({
-          dateTime: new Date(
-            schedule.schedules[0].departureTime.getTime() + schedule.route.durationHours * 60 * 60 * 1000
-          ),
-          periods: periodArrivals
-        })
-      )
+      if (periodArrivals)
+        conditions.push(
+          this.isInDateTimeRange({
+            dateTime: new Date(
+              schedule.schedules[0].departureTime.getTime() + schedule.route.durationHours * 60 * 60 * 1000
+            ),
+            periods: periodArrivals
+          })
+        )
+      // Check company id
+      if (companyIds) conditions.push(companyIds.includes(schedule.bus.busCompany.id))
 
-      if (
-        conditions.every((condition) => {
-          return condition
-        })
-      ) {
+      // Check if all conditions are true
+      if (conditions.every((condition) => condition)) {
         return true
       }
     })
