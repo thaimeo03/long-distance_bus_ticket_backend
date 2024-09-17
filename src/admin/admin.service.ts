@@ -1,4 +1,6 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import * as ExcelJS from 'exceljs'
+import { Response } from 'express'
 import { InjectRepository } from '@nestjs/typeorm'
 import { User } from 'src/users/entities/user.entity'
 import { FindOptionsWhere, Like, Repository } from 'typeorm'
@@ -254,6 +256,7 @@ export class AdminService {
       .addSelect('SUM(payment.amount)', 'totalAmount')
       .groupBy('year')
       .addGroupBy('week')
+      .addGroupBy('busCompany.name')
       .orderBy('year')
       .addOrderBy('week')
       .where('busCompany.id = :id', { id })
@@ -285,6 +288,7 @@ export class AdminService {
       .addSelect('SUM(payment.amount)', 'totalAmount')
       .groupBy('year')
       .addGroupBy('month')
+      .addGroupBy('busCompany.name')
       .orderBy('year')
       .addOrderBy('month')
       .where('busCompany.id = :id', { id })
@@ -327,5 +331,15 @@ export class AdminService {
       .groupBy('timeSlot')
       .orderBy('timeSlot')
       .getRawMany()
+  }
+
+  async exportAnalyzeCompanySalesInMonthReport(id: string, res: Response) {
+    monthlyRevenue = await analyzeCompanySalesInMonth(id)
+
+    // Create workbook and worksheet
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Monthly Revenue')
+
+    
   }
 }
