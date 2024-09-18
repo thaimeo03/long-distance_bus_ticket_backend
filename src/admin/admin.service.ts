@@ -83,12 +83,13 @@ export class AdminService {
   }
 
   async findAllBuses(filterBusDto: FilterBusDto) {
-    const { limit, page } = filterBusDto
+    const { limit, page, status } = filterBusDto
     const limitQuery = limit ? limit : 10
     const pageQuery = page ? page : 1
+    const statusQuery = status ? status : 0
 
     const whereQuery: FindOptionsWhere<Bus> | FindOptionsWhere<Bus>[] = {
-      status: filterBusDto.status
+      status: statusQuery
     }
 
     // Get blogs by filters
@@ -244,25 +245,6 @@ export class AdminService {
       .getRawMany()
   }
 
-  async analyzeCompanySalesInWeek(id: string) {
-    return await this.bookingRepository
-      .createQueryBuilder('booking')
-      .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
-      .innerJoinAndSelect('booking.seats', 'seats', 'booking.id = seats.bookingId')
-      .innerJoinAndSelect('seats.bus', 'bus', 'bus.id = seats.busId')
-      .innerJoinAndSelect('bus.busCompany', 'busCompany', 'busCompany.id = bus.busCompany')
-      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
-      .addSelect('EXTRACT(WEEK FROM payment.paymentDate)', 'week')
-      .addSelect('SUM(payment.amount)', 'totalAmount')
-      .groupBy('year')
-      .addGroupBy('week')
-      .addGroupBy('busCompany.name')
-      .orderBy('year')
-      .addOrderBy('week')
-      .where('busCompany.id = :id', { id })
-      .getRawMany()
-  }
-
   async analyzeSalesInMonth() {
     return await this.paymentRepository
       .createQueryBuilder('payment')
@@ -276,13 +258,32 @@ export class AdminService {
       .getRawMany()
   }
 
+  async analyzeCompanySalesInWeek(id: string) {
+    return await this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoinAndSelect('booking.payment', 'payment')
+      .innerJoinAndSelect('booking.seats', 'seat')
+      .innerJoinAndSelect('seat.bus', 'bus')
+      .innerJoinAndSelect('bus.busCompany', 'busCompany')
+      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+      .addSelect('EXTRACT(WEEK FROM payment.paymentDate)', 'week')
+      .addSelect('SUM(payment.amount)', 'totalAmount')
+      .groupBy('year')
+      .addGroupBy('week')
+      .addGroupBy('busCompany.name')
+      .orderBy('year')
+      .addOrderBy('week')
+      .where('busCompany.id = :id', { id })
+      .getRawMany()
+  }
+
   async analyzeCompanySalesInMonth(id: string) {
     return await this.bookingRepository
       .createQueryBuilder('booking')
-      .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
-      .innerJoinAndSelect('booking.seats', 'seats', 'booking.id = seats.bookingId')
-      .innerJoinAndSelect('seats.bus', 'bus', 'bus.id = seats.busId')
-      .innerJoinAndSelect('bus.busCompany', 'busCompany', 'busCompany.id = bus.busCompany')
+      .innerJoinAndSelect('booking.payment', 'payment')
+      .innerJoinAndSelect('booking.seats', 'seat')
+      .innerJoinAndSelect('seat.bus', 'bus')
+      .innerJoinAndSelect('bus.busCompany', 'busCompany')
       .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
       .addSelect('EXTRACT(MONTH FROM payment.paymentDate)', 'month')
       .addSelect('SUM(payment.amount)', 'totalAmount')
