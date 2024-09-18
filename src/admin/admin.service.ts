@@ -221,15 +221,30 @@ export class AdminService {
   }
 
   async getUserCount() {
-    return this.usersRepository.count()
+    const cnt = await this.usersRepository.count()
+
+    return new ResponseData({
+      message: 'Get user count successfully',
+      data: cnt
+    })
   }
 
   async getBusCompanyCount() {
-    return this.busCompaniesRepository.count()
+    const cnt = await this.busCompaniesRepository.count()
+
+    return new ResponseData({
+      message: 'Get user count successfully',
+      data: cnt
+    })
   }
 
   async getActiveBusCount() {
-    return this.busesRepository.count({ where: { status: BusStatus.Ready } })
+    const cnt = await this.busesRepository.count({ where: { status: BusStatus.Ready } })
+
+    return new ResponseData({
+      message: 'Get active bus count successfully',
+      data: cnt
+    })
   }
 
   async analyzeSalesInWeek() {
