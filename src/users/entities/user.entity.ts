@@ -14,10 +14,10 @@ export class User {
   @Column({ type: 'varchar' })
   fullName: string
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   phoneNumber: string
 
-  @Column({ type: 'smallint' })
+  @Column({ type: 'smallint', nullable: true })
   age: number
 
   @Column({ type: 'varchar', nullable: true })

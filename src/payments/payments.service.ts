@@ -72,7 +72,7 @@ export class PaymentsService {
         pickupLocation: bookingInfo.pickupStop.location,
         dropOffLocation: bookingInfo.dropOffStop.location,
         amount: bookingInfo.payment.amount * bookingInfo.quantity,
-        departureTime: bookingInfo.schedule.departureTime.toLocaleDateString('en-US'),
+        departureTime: bookingInfo.schedule.departureTime.toLocaleDateString('en-GB'),
         seats: bookingInfo.seats.map((seat) => seat.seatNumber).join(', '),
         user: {
           age: bookingInfo.user.age,
