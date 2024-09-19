@@ -51,6 +51,7 @@ export class AdminService {
         fullName: true,
         email: true,
         sex: true,
+        phoneNumber: true,
         dateOfBirth: true,
         role: true
       },

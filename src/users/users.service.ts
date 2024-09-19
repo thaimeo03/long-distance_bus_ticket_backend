@@ -138,4 +138,11 @@ export class UsersService {
       }
     )
   }
+
+  // 1. Check email exists
+  // 2. Generate OTP with 6 digits
+  // 3. Hash OTP
+  // 4. Caching OTP
+  // 5. Send email with OTP
+  async forgotPassword(email: string) {}
 }
