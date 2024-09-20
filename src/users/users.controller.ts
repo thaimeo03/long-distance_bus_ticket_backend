@@ -6,6 +6,7 @@ import { ResponseData } from 'common/core/response-success.dto'
 import { LoginDto } from './dto/login.dto'
 import { AuthGuardJwt } from 'src/auth/guards/auth.guard'
 import { UpdateUserDto } from './dto/update-user.dto'
+import { ForgotPasswordDto } from './dto/forgot-password.dto'
 
 @Controller('users')
 export class UsersController {
@@ -63,5 +64,14 @@ export class UsersController {
     await this.usersService.updateProfile({ userId, updateUserDto })
 
     return new ResponseData({ message: 'Update profile successfully' })
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    const { email } = forgotPasswordDto
+
+    await this.usersService.forgotPassword(email)
+
+    return new ResponseData({ message: 'Please check your email' })
   }
 }

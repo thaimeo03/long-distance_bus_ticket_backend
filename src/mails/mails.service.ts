@@ -1,6 +1,7 @@
 import { MailerService } from '@nestjs-modules/mailer'
 import { Injectable, Logger } from '@nestjs/common'
 import { TicketInfoDto } from './dto/ticket-info.dto'
+import { ForgotPasswordDto } from './dto/forgot-password.dto'
 
 @Injectable()
 export class MailsService {
@@ -29,6 +30,21 @@ export class MailsService {
         pickupLocation: tickInfoDto.pickupLocation,
         dropOffLocation: tickInfoDto.dropOffLocation,
         departureTime: tickInfoDto.departureTime
+      }
+    })
+  }
+
+  async sendForgotPasswordOTP(forgotPasswordOTP: ForgotPasswordDto) {
+    this.logger.log('Send forgot password OTP...')
+
+    await this.mailerService.sendMail({
+      to: forgotPasswordOTP.email,
+      from: this.FROM,
+      subject: 'Forgot password OTP',
+      template: './forgot-password.template.hbs',
+      context: {
+        fullName: forgotPasswordOTP.fullName,
+        otp: forgotPasswordOTP.OTP
       }
     })
   }

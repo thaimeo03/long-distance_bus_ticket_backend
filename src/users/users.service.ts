@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from './entities/user.entity'
@@ -8,12 +8,19 @@ import { AuthService } from 'src/auth/auth.service'
 import * as bcrypt from 'bcrypt'
 import { LoginDto } from './dto/login.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Cache } from 'cache-manager'
+import { ConfigService } from '@nestjs/config'
+import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
-    private authService: AuthService
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private configService: ConfigService,
+    private authService: AuthService,
+    private mailService: MailsService
   ) {}
 
   // 1. Check email exists and is not draft
@@ -140,9 +147,26 @@ export class UsersService {
   }
 
   // 1. Check email exists
-  // 2. Generate OTP with 6 digits
-  // 3. Hash OTP
-  // 4. Caching OTP
-  // 5. Send email with OTP
-  async forgotPassword(email: string) {}
+  // 2. Generate OTP with 6 digits and hash it
+  // 3. Caching OTP
+  // 4. Send email with OTP
+  async forgotPassword(email: string) {
+    // 1
+    const user = await this.userRepository.findOneBy({ email })
+    if (!user) throw new NotFoundException('Account is not exist')
+
+    // 2
+    const OTP = Math.floor(100000 + Math.random() * 900000).toString()
+    const hashedOTP = await bcrypt.hash(OTP, 10)
+
+    // 3 & 4
+    await Promise.all([
+      await this.cacheManager.set(
+        user.id,
+        hashedOTP,
+        (this.configService.get('USER_FORGOT_PASSWORD_OTP_TTL') || 2) * 60 * 1000 // TTL default 2 minutes
+      ),
+      await this.mailService.sendForgotPasswordOTP({ email, OTP, fullName: user.fullName })
+    ])
+  }
 }
