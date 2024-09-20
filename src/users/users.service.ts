@@ -12,6 +12,8 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Cache } from 'cache-manager'
 import { ConfigService } from '@nestjs/config'
 import { MailsService } from 'src/mails/mails.service'
+import { VerifyForgotPasswordOTPDto } from './dto/verify-forgot-password-OTP.dto'
+import { ResetPasswordDto } from './dto/reset-password.dto'
 
 @Injectable()
 export class UsersService {
@@ -160,13 +162,59 @@ export class UsersService {
     const hashedOTP = await bcrypt.hash(OTP, 10)
 
     // 3 & 4
+    const KEY = `${email}-forgot-password-otp`
+    const TTL = (Number(this.configService.get('USER_FORGOT_PASSWORD_OTP_TTL')) || 2) * 60 * 1000 // TTL default 2 minutes
     await Promise.all([
-      await this.cacheManager.set(
-        user.id,
-        hashedOTP,
-        (this.configService.get('USER_FORGOT_PASSWORD_OTP_TTL') || 2) * 60 * 1000 // TTL default 2 minutes
-      ),
+      await this.cacheManager.set(KEY, hashedOTP, TTL),
       await this.mailService.sendForgotPasswordOTP({ email, OTP, fullName: user.fullName })
+    ])
+  }
+
+  // 1. Check email exists
+  // 2. Get and verify OTP from cache
+  // 3. Cache OTP status
+  async verifyForgotPasswordOTP(verifyForgotPasswordOTPDto: VerifyForgotPasswordOTPDto) {
+    // 1
+    const { email, OTP } = verifyForgotPasswordOTPDto
+    const user = await this.userRepository.findOneBy({ email })
+    if (!user) throw new NotFoundException('Account is not exist')
+
+    // 2
+    const KEY1 = `${email}-forgot-password-otp`
+    const hashedOTP = await this.cacheManager.get<string>(KEY1)
+    if (!hashedOTP) throw new UnauthorizedException('OTP expired')
+
+    const isMatch = await bcrypt.compare(OTP, hashedOTP)
+    if (!isMatch) throw new UnauthorizedException('OTP is invalid')
+
+    // 3
+    const KEY2 = `${email}-forgot-password-otp-status`
+    const TTL = (Number(this.configService.get('USER_FORGOT_PASSWORD_OTP_STATUS_TTL')) || 5) * 60 * 1000 // TTL default 5 minutes
+    await Promise.all([await this.cacheManager.del(KEY1), await this.cacheManager.set(KEY2, true, TTL)])
+  }
+
+  // 1. Check email exists
+  // 2. Get and verify OTP status from cache
+  // 3. Hash new password
+  // 4. Update new password
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    // 1
+    const { email, newPassword } = resetPasswordDto
+    const user = await this.userRepository.findOneBy({ email })
+    if (!user) throw new NotFoundException('Account is not exist')
+
+    // 2
+    const KEY = `${email}-forgot-password-otp-status`
+    const OTPStatus = await this.cacheManager.get<boolean>(KEY)
+    if (!OTPStatus) throw new UnauthorizedException('OTP expired')
+
+    // 3
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    // 4
+    await Promise.all([
+      await this.cacheManager.del(KEY),
+      await this.userRepository.update({ id: user.id }, { passwordHashed: hashedPassword })
     ])
   }
 }

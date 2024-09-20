@@ -7,6 +7,8 @@ import { LoginDto } from './dto/login.dto'
 import { AuthGuardJwt } from 'src/auth/guards/auth.guard'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { ForgotPasswordDto } from './dto/forgot-password.dto'
+import { VerifyForgotPasswordOTPDto } from './dto/verify-forgot-password-OTP.dto'
+import { ResetPasswordDto } from './dto/reset-password.dto'
 
 @Controller('users')
 export class UsersController {
@@ -73,5 +75,19 @@ export class UsersController {
     await this.usersService.forgotPassword(email)
 
     return new ResponseData({ message: 'Please check your email' })
+  }
+
+  @Post('forgot-password/verify-otp')
+  async verifyForgotPasswordOTP(@Body() verifyForgotPasswordOTPDto: VerifyForgotPasswordOTPDto) {
+    await this.usersService.verifyForgotPasswordOTP(verifyForgotPasswordOTPDto)
+
+    return new ResponseData({ message: 'Verify OTP successfully' })
+  }
+
+  @Post('forgot-password/reset-password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    await this.usersService.resetPassword(resetPasswordDto)
+
+    return new ResponseData({ message: 'Reset password successfully' })
   }
 }

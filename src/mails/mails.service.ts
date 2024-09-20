@@ -6,7 +6,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto'
 @Injectable()
 export class MailsService {
   private readonly logger = new Logger(MailsService.name)
-  private readonly FROM = '"Vé xe khách" <thaitran15072003@gmail.com>'
+  private readonly FROM = '"Dịch vụ đặt xe khách" <thaitran15072003@gmail.com>'
 
   constructor(private mailerService: MailerService) {}
 
