@@ -72,16 +72,16 @@ export class UsersController {
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     const { email } = forgotPasswordDto
 
-    await this.usersService.forgotPassword(email)
+    const data = await this.usersService.forgotPassword(email)
 
-    return new ResponseData({ message: 'Please check your email' })
+    return new ResponseData({ message: 'Please check your email', data })
   }
 
   @Post('forgot-password/verify-otp')
   async verifyForgotPasswordOTP(@Body() verifyForgotPasswordOTPDto: VerifyForgotPasswordOTPDto) {
-    await this.usersService.verifyForgotPasswordOTP(verifyForgotPasswordOTPDto)
+    const data = await this.usersService.verifyForgotPasswordOTP(verifyForgotPasswordOTPDto)
 
-    return new ResponseData({ message: 'Verify OTP successfully' })
+    return new ResponseData({ message: 'Verify OTP successfully', data })
   }
 
   @Post('forgot-password/reset-password')

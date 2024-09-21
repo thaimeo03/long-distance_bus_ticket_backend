@@ -168,6 +168,8 @@ export class UsersService {
       await this.cacheManager.set(KEY, hashedOTP, TTL),
       await this.mailService.sendForgotPasswordOTP({ email, OTP, fullName: user.fullName })
     ])
+
+    return { TTL }
   }
 
   // 1. Check email exists
@@ -191,6 +193,8 @@ export class UsersService {
     const KEY2 = `${email}-forgot-password-otp-status`
     const TTL = (Number(this.configService.get('USER_FORGOT_PASSWORD_OTP_STATUS_TTL')) || 5) * 60 * 1000 // TTL default 5 minutes
     await Promise.all([await this.cacheManager.del(KEY1), await this.cacheManager.set(KEY2, true, TTL)])
+
+    return { TTL }
   }
 
   // 1. Check email exists
