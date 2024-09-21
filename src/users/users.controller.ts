@@ -6,6 +6,9 @@ import { ResponseData } from 'common/core/response-success.dto'
 import { LoginDto } from './dto/login.dto'
 import { AuthGuardJwt } from 'src/auth/guards/auth.guard'
 import { UpdateUserDto } from './dto/update-user.dto'
+import { ForgotPasswordDto } from './dto/forgot-password.dto'
+import { VerifyForgotPasswordOTPDto } from './dto/verify-forgot-password-OTP.dto'
+import { ResetPasswordDto } from './dto/reset-password.dto'
 
 @Controller('users')
 export class UsersController {
@@ -63,5 +66,28 @@ export class UsersController {
     await this.usersService.updateProfile({ userId, updateUserDto })
 
     return new ResponseData({ message: 'Update profile successfully' })
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    const { email } = forgotPasswordDto
+
+    const data = await this.usersService.forgotPassword(email)
+
+    return new ResponseData({ message: 'Please check your email', data })
+  }
+
+  @Post('forgot-password/verify-otp')
+  async verifyForgotPasswordOTP(@Body() verifyForgotPasswordOTPDto: VerifyForgotPasswordOTPDto) {
+    const data = await this.usersService.verifyForgotPasswordOTP(verifyForgotPasswordOTPDto)
+
+    return new ResponseData({ message: 'Verify OTP successfully', data })
+  }
+
+  @Post('forgot-password/reset-password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    await this.usersService.resetPassword(resetPasswordDto)
+
+    return new ResponseData({ message: 'Reset password successfully' })
   }
 }
