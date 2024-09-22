@@ -66,20 +66,6 @@ export class AdminController {
     return this.adminService.getActiveBusCount()
   }
 
-  @Get('report/analyze-in-week')
-  @UseGuards(AuthGuardJwt)
-  @Roles(Role.Admin)
-  async analyzeBusInWeek() {
-    return await this.adminService.analyzeSalesInWeek()
-  }
-
-  @Get('report/analyze-in-month')
-  @UseGuards(AuthGuardJwt)
-  @Roles(Role.Admin)
-  async analyzeBusInMonth() {
-    return await this.adminService.analyzeSalesInMonth()
-  }
-
   @Get('report/analyze-company-bus-in-week/:id')
   @UseGuards(AuthGuardJwt)
   @Roles(Role.Admin)

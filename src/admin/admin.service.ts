@@ -249,7 +249,7 @@ export class AdminService {
   }
 
   async analyzeSalesInWeek() {
-    return await this.paymentRepository
+    const data = await this.paymentRepository
       .createQueryBuilder('payment')
       .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
       .addSelect('EXTRACT(WEEK FROM payment.paymentDate)', 'week')
@@ -259,10 +259,15 @@ export class AdminService {
       .orderBy('year')
       .addOrderBy('week')
       .getRawMany()
+
+    return new ResponseData({
+      message: 'Get sales in week successfully',
+      data
+    })
   }
 
   async analyzeSalesInMonth() {
-    return await this.paymentRepository
+    const data = await this.paymentRepository
       .createQueryBuilder('payment')
       .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
       .addSelect('EXTRACT(MONTH FROM payment.paymentDate)', 'month')
@@ -272,48 +277,75 @@ export class AdminService {
       .orderBy('year')
       .addOrderBy('month')
       .getRawMany()
+
+    return new ResponseData({
+      message: 'Get sales in month successfully',
+      data
+    })
   }
 
   async analyzeCompanySalesInWeek(id: string) {
-    return await this.bookingRepository
-      .createQueryBuilder('booking')
-      .innerJoinAndSelect('booking.payment', 'payment')
-      .innerJoinAndSelect('booking.seats', 'seat')
-      .innerJoinAndSelect('seat.bus', 'bus')
-      .innerJoinAndSelect('bus.busCompany', 'busCompany')
-      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
-      .addSelect('EXTRACT(WEEK FROM payment.paymentDate)', 'week')
-      .addSelect('SUM(payment.amount)', 'totalAmount')
-      .groupBy('year')
-      .addGroupBy('week')
-      .addGroupBy('busCompany.name')
-      .orderBy('year')
-      .addOrderBy('week')
-      .where('busCompany.id = :id', { id })
-      .getRawMany()
+    let data: any
+
+    if (id === 'all') {
+      data = (await this.analyzeSalesInWeek()).data
+    } else {
+      data = await this.bookingRepository
+        .createQueryBuilder('booking')
+        .innerJoinAndSelect('booking.payment', 'payment')
+        .innerJoinAndSelect('booking.seats', 'seat')
+        .innerJoinAndSelect('seat.bus', 'bus')
+        .innerJoinAndSelect('bus.busCompany', 'busCompany')
+        .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+        .addSelect('EXTRACT(WEEK FROM payment.paymentDate)', 'week')
+        .addSelect('SUM(payment.amount)', 'totalAmount')
+        .groupBy('year')
+        .addGroupBy('week')
+        .addGroupBy('busCompany.name')
+        .orderBy('year')
+        .addOrderBy('week')
+        .where('busCompany.id = :id', { id })
+        .getRawMany()
+    }
+
+    return new ResponseData({
+      message: 'Get company sales in week successfully',
+      data
+    })
   }
 
   async analyzeCompanySalesInMonth(id: string) {
-    return await this.bookingRepository
-      .createQueryBuilder('booking')
-      .innerJoinAndSelect('booking.payment', 'payment')
-      .innerJoinAndSelect('booking.seats', 'seat')
-      .innerJoinAndSelect('seat.bus', 'bus')
-      .innerJoinAndSelect('bus.busCompany', 'busCompany')
-      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
-      .addSelect('EXTRACT(MONTH FROM payment.paymentDate)', 'month')
-      .addSelect('SUM(payment.amount)', 'totalAmount')
-      .groupBy('year')
-      .addGroupBy('month')
-      .addGroupBy('busCompany.name')
-      .orderBy('year')
-      .addOrderBy('month')
-      .where('busCompany.id = :id', { id })
-      .getRawMany()
+    let data: any
+
+    if (id === 'all') {
+      data = (await this.analyzeSalesInMonth()).data
+    } else {
+      data = await this.bookingRepository
+        .createQueryBuilder('booking')
+        .innerJoinAndSelect('booking.payment', 'payment')
+        .innerJoinAndSelect('booking.seats', 'seat')
+        .innerJoinAndSelect('seat.bus', 'bus')
+        .innerJoinAndSelect('bus.busCompany', 'busCompany')
+        .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+        .addSelect('EXTRACT(MONTH FROM payment.paymentDate)', 'month')
+        .addSelect('SUM(payment.amount)', 'totalAmount')
+        .groupBy('year')
+        .addGroupBy('month')
+        .addGroupBy('busCompany.name')
+        .orderBy('year')
+        .addOrderBy('month')
+        .where('busCompany.id = :id', { id })
+        .getRawMany()
+    }
+
+    return new ResponseData({
+      message: 'Get company sales in month successfully',
+      data
+    })
   }
 
   async analyzeByRoute() {
-    return await this.paymentRepository
+    const data = await this.paymentRepository
       .createQueryBuilder('payment')
       .innerJoin('payment.booking', 'booking')
       .innerJoin('booking.pickupStop', 'pickupStop')
@@ -321,6 +353,11 @@ export class AdminService {
       .select(["CONCAT(pickupStop.location, ' -> ', dropOffStop.location) AS route", 'COUNT(*) AS count'])
       .groupBy('route')
       .getRawMany()
+
+    return new ResponseData({
+      message: 'Get analyze by route successfully',
+      data
+    })
   }
 
   // Task scheduling
@@ -333,7 +370,7 @@ export class AdminService {
   // }
 
   async analyzeBusDepartureByTimeSlot() {
-    return await this.bookingRepository
+    const data = await this.bookingRepository
       .createQueryBuilder('booking')
       .innerJoinAndSelect('booking.payment', 'payment', 'payment.id = booking.paymentId')
       .innerJoinAndSelect('booking.schedule', 'schedule', 'booking.scheduleId = schedule.id')
@@ -350,10 +387,15 @@ export class AdminService {
       .groupBy('timeSlot')
       .orderBy('timeSlot')
       .getRawMany()
+
+    return new ResponseData({
+      message: 'Get analyze bus departure by time slot successfully',
+      data
+    })
   }
 
   async exportAnalyzeReportCompanySalesInMonth(id: string, res: Response) {
-    const monthlyRevenue = await this.analyzeCompanySalesInMonth(id)
+    const monthlyRevenue = (await this.analyzeCompanySalesInMonth(id)).data
 
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Monthly Revenue')
@@ -380,7 +422,7 @@ export class AdminService {
   }
 
   async exportAnalyzeReportCompanySalesInWeek(id: string, res: Response) {
-    const monthlyRevenue = await this.analyzeCompanySalesInWeek(id)
+    const monthlyRevenue = (await this.analyzeCompanySalesInWeek(id)).data
 
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Weekly Revenue')
