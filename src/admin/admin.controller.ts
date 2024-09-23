@@ -121,4 +121,11 @@ export class AdminController {
   async exportAnalyzeReportCompanySalesInWeek(@Param('id') id: string, @Res() res: Response) {
     return await this.adminService.exportAnalyzeReportCompanySalesInWeek(id, res)
   }
+
+  @Get('report/analyze-sales-by-week-of-month')
+  @UseGuards(AuthGuardJwt)
+  @Roles(Role.Admin)
+  async analyzeSalesByWeekOfMonth() {
+    return await this.adminService.analyzeSalesByWeekOfMonth()
+  }
 }

@@ -353,56 +353,121 @@ export class AdminService {
   }
 
   async exportAnalyzeReportCompanySalesInMonth(id: string, res: Response) {
-    const monthlyRevenue = await this.analyzeCompanySalesInMonth(id);
+    const monthlyRevenue = await this.analyzeCompanySalesInMonth(id)
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Monthly Revenue');
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Monthly Revenue')
 
     worksheet.columns = [
       { header: 'Year', key: 'year', width: 10 },
       { header: 'Month', key: 'month', width: 10 },
       { header: 'Total Revenue', key: 'totalRevenue', width: 15 }
-    ];
+    ]
 
     monthlyRevenue.forEach((row) => {
       worksheet.addRow({
         year: row.year,
         month: row.month,
         totalRevenue: row.totalAmount // Ensure the key matches the data structure
-      });
-    });
+      })
+    })
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=monthly-revenue.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', 'attachment; filename=monthly-revenue.xlsx')
 
-    await workbook.xlsx.write(res);
-    res.end();
+    await workbook.xlsx.write(res)
+    res.end()
   }
 
   async exportAnalyzeReportCompanySalesInWeek(id: string, res: Response) {
-    const weeklyRevenue = await this.analyzeCompanySalesInWeek(id);
+    const weeklyRevenue = await this.analyzeCompanySalesInWeek(id)
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Weekly Revenue');
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Weekly Revenue')
 
     worksheet.columns = [
       { header: 'Year', key: 'year', width: 10 },
       { header: 'Week', key: 'week', width: 10 },
       { header: 'Total Revenue', key: 'totalRevenue', width: 15 }
-    ];
+    ]
 
     weeklyRevenue.forEach((row) => {
       worksheet.addRow({
         year: row.year,
         week: row.week,
         totalRevenue: row.totalAmount // Ensure the key matches the data structure
-      });
-    });
+      })
+    })
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=weekly-revenue.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', 'attachment; filename=weekly-revenue.xlsx')
 
-    await workbook.xlsx.write(res);
-    res.end();
+    await workbook.xlsx.write(res)
+    res.end()
+  }
+
+  async analyzeSalesByWeekOfMonth() {
+    const rawData = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .select('EXTRACT(YEAR FROM payment.paymentDate)', 'year')
+      .addSelect('EXTRACT(MONTH FROM payment.paymentDate)', 'month')
+      .addSelect(
+        `
+        CASE 
+          WHEN EXTRACT(DAY FROM payment.paymentDate) BETWEEN 1 AND 7 THEN 'Week 1'
+          WHEN EXTRACT(DAY FROM payment.paymentDate) BETWEEN 8 AND 14 THEN 'Week 2'
+          WHEN EXTRACT(DAY FROM payment.paymentDate) BETWEEN 15 AND 21 THEN 'Week 3'
+          WHEN EXTRACT(DAY FROM payment.paymentDate) BETWEEN 22 AND 28 THEN 'Week 4'
+        END`,
+        'week_of_month'
+      )
+      .addSelect('SUM(payment.amount)', 'total_amount')
+      .where('EXTRACT(DAY FROM payment.paymentDate) <= 28')
+      .groupBy('year')
+      .addGroupBy('month')
+      .addGroupBy('week_of_month')
+      .orderBy('year')
+      .addOrderBy('month')
+      .addOrderBy('week_of_month')
+      .getRawMany()
+
+    // Transform the raw data into the desired nested structure
+    const result = rawData.reduce((acc, curr) => {
+      const { year, month, week_of_month, total_amount } = curr
+      const yearMonthKey = `${year}-${month}`
+
+      if (!acc[yearMonthKey]) {
+        acc[yearMonthKey] = {
+          year,
+          month,
+          weeks: []
+        }
+      }
+
+      acc[yearMonthKey].weeks.push({
+        weekOfMonth: week_of_month,
+        totalAmount: total_amount
+      })
+
+      return acc
+    }, {})
+
+    // Ensure each month contains all four weeks
+    const completeResult = Object.values(result).map((monthData: any) => {
+      const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4']
+      weeks.forEach((week) => {
+        if (!monthData.weeks.find((w: any) => w.weekOfMonth === week)) {
+          monthData.weeks.push({
+            weekOfMonth: week,
+            totalAmount: '0'
+          })
+        }
+      })
+      // Sort weeks to maintain order
+      monthData.weeks.sort((a: any, b: any) => weeks.indexOf(a.weekOfMonth) - weeks.indexOf(b.weekOfMonth))
+      return monthData
+    })
+
+    return completeResult
   }
 }
