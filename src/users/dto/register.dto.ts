@@ -1,9 +1,11 @@
-import { IsEmail, IsNumberString, IsString, MinLength } from 'class-validator'
+import { IsEmail, IsNumberString, IsString, Matches, MaxLength, MinLength } from 'class-validator'
 import { IsMatch } from 'common/decorators/validation.de'
 
 export class RegisterDto {
   @IsString()
   @MinLength(3)
+  @MaxLength(100)
+  @Matches(/^[\p{L} ]+$/u, { message: 'Full name must only contain letters' })
   fullName: string
 
   @IsEmail()
@@ -11,7 +13,7 @@ export class RegisterDto {
 
   @IsString()
   @MinLength(10)
-  @IsNumberString()
+  @IsNumberString({ no_symbols: true })
   phoneNumber: string
 
   @IsString()

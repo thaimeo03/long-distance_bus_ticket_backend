@@ -396,7 +396,6 @@ export class AdminService {
 
   async exportAnalyzeReportCompanySalesInMonth(id: string, res: Response) {
     const monthlyRevenue = (await this.analyzeCompanySalesInMonth(id)).data
-
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Monthly Revenue')
 
@@ -410,7 +409,7 @@ export class AdminService {
       worksheet.addRow({
         year: row.year,
         month: row.month,
-        totalRevenue: row.totalRevenue
+        totalRevenue: row.totalAmount
       })
     })
 
@@ -422,7 +421,7 @@ export class AdminService {
   }
 
   async exportAnalyzeReportCompanySalesInWeek(id: string, res: Response) {
-    const monthlyRevenue = (await this.analyzeCompanySalesInWeek(id)).data
+    const weeklyRevenue = (await this.analyzeCompanySalesInWeek(id)).data
 
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Weekly Revenue')
@@ -433,11 +432,11 @@ export class AdminService {
       { header: 'Total Revenue', key: 'totalRevenue', width: 15 }
     ]
 
-    monthlyRevenue.forEach((row) => {
+    weeklyRevenue.forEach((row) => {
       worksheet.addRow({
         year: row.year,
-        month: row.week,
-        totalRevenue: row.totalRevenue
+        week: row.week,
+        totalRevenue: row.totalAmount
       })
     })
 
