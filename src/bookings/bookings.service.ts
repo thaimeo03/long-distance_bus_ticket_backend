@@ -31,26 +31,34 @@ export class BookingsService {
   ) {}
 
   // 1. Check user exists. If not, create one (user draft)
-  // 2. Book seats
-  // 3. Check schedule exists
-  // 4. Check pickupStop and dropOffStop exists
-  // 5. Create booking, payment and return it
+  // 2. Check schedule exists
+  // 3. Check pickupStop and dropOffStop exists
+  // 4. Check pickupStop and dropOffStop are not the same
+  // 5. Book seats
+  // 6. Create booking, payment and return it
   async createBooking(createBookingDto: CreateBookingDto) {
     // 1
     const user = await this.usersService.createUserDraft(createBookingDto)
+
     // 2
-    const seats = await this.seatsService.bookSeats({ seats: createBookingDto.seats, busId: createBookingDto.busId })
-    // 3
     const schedule = await this.scheduleRepository.findOne({ where: { id: createBookingDto.scheduleId } })
     if (!schedule) throw new NotFoundException('Schedule not found')
-    // 4
+
+    // 3
     const pickupStop = await this.routeStopRepository.findOne({ where: { id: createBookingDto.pickupStopId } })
     if (!pickupStop) throw new NotFoundException('Pickup stop not found')
 
     const dropOffStop = await this.routeStopRepository.findOne({ where: { id: createBookingDto.dropOffStopId } })
     if (!dropOffStop) throw new NotFoundException('Drop off stop not found')
 
+    // 4
+    if (pickupStop.id === dropOffStop.id)
+      throw new BadRequestException('Pickup stop and drop off stop cannot be the same')
+
     // 5
+    const seats = await this.seatsService.bookSeats({ seats: createBookingDto.seats, busId: createBookingDto.busId })
+
+    // 6
     const price = await this.pricesService.getPriceByRouteStops({
       pickupStopId: createBookingDto.pickupStopId,
       dropOffStopId: createBookingDto.dropOffStopId

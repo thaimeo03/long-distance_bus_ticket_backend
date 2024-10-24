@@ -1,8 +1,22 @@
-import { IsArray, IsEmail, IsNotEmpty, IsNumber, IsString, Max, Min, MinLength } from 'class-validator'
+import {
+  IsArray,
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  IsNumberString,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength
+} from 'class-validator'
 
 export class CreateBookingDto {
   @IsString()
   @MinLength(3)
+  @MaxLength(100)
+  @Matches(/^[\p{L} ]+$/u, { message: 'Full name must only contain letters' })
   fullName: string
 
   @IsEmail()
@@ -14,6 +28,7 @@ export class CreateBookingDto {
   age: number
 
   @IsString()
+  @IsNumberString({ no_symbols: true })
   @MinLength(10)
   phoneNumber: string
 

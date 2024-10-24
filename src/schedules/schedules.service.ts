@@ -38,14 +38,16 @@ export class SchedulesService {
       .innerJoinAndSelect('route.prices', 'prices')
       .innerJoinAndSelect('bus.busCompany', 'busCompany')
       .where('bus.status = :status', { status: BusStatus.Ready })
-      .andWhere('LOWER(pickupStop.location) LIKE LOWER(:pickupLocation)', {
-        pickupLocation: `%${findSchedulesDto.pickupLocation}%`
+      .andWhere('pickupStop.location ILIKE :pickupLocation', {
+        pickupLocation: `%${findSchedulesDto.pickupLocation.toLowerCase()}%`
       })
-      .andWhere('LOWER(dropOffStop.location) LIKE LOWER(:dropOffLocation)', {
-        dropOffLocation: `%${findSchedulesDto.dropOffLocation}%`
+      .andWhere('dropOffStop.location ILIKE :dropOffLocation', {
+        dropOffLocation: `%${findSchedulesDto.dropOffLocation.toLowerCase()}%`
       })
       .andWhere('pickupStop.distanceFromStartKm < dropOffStop.distanceFromStartKm') // Ensure pickup is before drop-off
-      // .andWhere('DATE(schedule.departureTime) = DATE(:departureDate)', { departureDate: findSchedulesDto.departureDate })
+      .andWhere('DATE(schedule.departureTime) = DATE(:departureDate)', {
+        departureDate: findSchedulesDto.departureDate
+      })
       .orderBy('routeStops.distanceFromStartKm', 'ASC')
       .addOrderBy('schedule.departureTime', 'ASC')
       .addOrderBy('prices.price', 'ASC')
