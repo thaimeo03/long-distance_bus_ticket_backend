@@ -25,6 +25,7 @@ import { MailsModule } from './mails/mails.module'
 import { AuthModule } from './auth/auth.module'
 import { AdminModule } from './admin/admin.module'
 import { BusCompaniesModule } from './bus-companies/bus-companies.module';
+import { RoutesModule } from './routes/routes.module';
 
 @Module({
   imports: [
@@ -46,7 +47,8 @@ import { BusCompaniesModule } from './bus-companies/bus-companies.module';
     MailsModule,
     AuthModule,
     AdminModule,
-    BusCompaniesModule
+    BusCompaniesModule,
+    RoutesModule
   ],
   controllers: [AppController],
   providers: [AppService, DataService]
