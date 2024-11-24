@@ -6,6 +6,7 @@ import { CreateRouteDto } from './dto/create-route.dto'
 import { CreateRouteDetailsDto } from './dto/create-route-details.dto'
 import { RouteStopsService } from 'src/route-stops/route-stops.service'
 import { PricesService } from 'src/prices/prices.service'
+import { RouteStop } from 'src/route-stops/entities/route-stop.entity'
 
 @Injectable()
 export class RoutesService {
@@ -29,14 +30,11 @@ export class RoutesService {
       durationHours
     })
 
-    const createdRouteStops = await Promise.all(
-      routeStops.map((routeStop) =>
-        this.routeStopsService.createRouteStop({
-          ...routeStop,
-          routeId: route.id
-        })
-      )
-    )
+    const createdRouteStops: RouteStop[] = []
+
+    for (const routeStop of routeStops) {
+      createdRouteStops.push(await this.routeStopsService.createRouteStop({ ...routeStop, routeId: route.id }))
+    }
 
     const sortedRouteStops = createdRouteStops.sort((a, b) => a.distanceFromStartKm - b.distanceFromStartKm)
 

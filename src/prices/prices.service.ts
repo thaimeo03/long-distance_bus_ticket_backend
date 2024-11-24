@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Route } from 'src/routes/entities/route.entity'
 import { Repository } from 'typeorm'
@@ -23,6 +23,8 @@ export class PricesService {
       this.routeStopRepository.findOneBy({ id: startStopId }),
       this.routeStopRepository.findOneBy({ id: endStopId })
     ])
+
+    if (!route || !startStop || !endStop) throw new InternalServerErrorException('Something went wrong')
 
     if (endStop.distanceFromStartKm < startStop.distanceFromStartKm)
       throw new BadRequestException('Distance of end stop must be greater than start stop')

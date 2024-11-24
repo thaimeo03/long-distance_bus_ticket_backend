@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { RouteStop } from './entities/route-stop.entity'
 import { Repository } from 'typeorm'
@@ -13,7 +13,27 @@ export class RouteStopsService {
   ) {}
 
   async createRouteStop(createRouteStopDto: CreateRouteStopDto) {
-    const route = await this.routeRepository.findOneBy({ id: createRouteStopDto.routeId })
+    const [route, firstRouteStop] = await Promise.all([
+      this.routeRepository.findOneBy({ id: createRouteStopDto.routeId }),
+      this.routeStopRepository
+        .createQueryBuilder('routeStop')
+        .leftJoinAndSelect('routeStop.route', 'route')
+        .where('routeStop.routeId = :routeId', { routeId: createRouteStopDto.routeId })
+        .orderBy('routeStop.arrivalTime')
+        .getOne()
+    ])
+
+    if (!route) throw new NotFoundException('Route not found')
+
+    if (firstRouteStop) {
+      const arrivalTime = new Date(createRouteStopDto.arrivalTime)
+      const timestamp = new Date(firstRouteStop.arrivalTime).getTime() + route.durationHours * 60 * 60 * 1000
+
+      if (timestamp < arrivalTime.getTime() || firstRouteStop.arrivalTime.getTime() > arrivalTime.getTime()) {
+        throw new BadRequestException('Wrong arrival time')
+      }
+    }
+
     return await this.routeStopRepository.save({ ...createRouteStopDto, route })
   }
 

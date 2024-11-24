@@ -1,4 +1,4 @@
-import { IsDate, IsInt, IsNumber, IsString, IsUUID, MinLength } from 'class-validator'
+import { IsDateString, IsInt, IsNumber, IsString, IsUUID, MinLength } from 'class-validator'
 
 export class CreateRouteStopDto {
   @IsString()
@@ -9,8 +9,8 @@ export class CreateRouteStopDto {
   @IsInt()
   distanceFromStartKm: number
 
-  @IsDate()
-  arrivalTime: Date
+  @IsDateString()
+  arrivalTime: string
 
   @IsUUID()
   routeId: string
