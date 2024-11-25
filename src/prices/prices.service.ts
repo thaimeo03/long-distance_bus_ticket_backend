@@ -39,6 +39,10 @@ export class PricesService {
     })
   }
 
+  async getPrice({ pickupStopId, dropOffStopId }: GetPriceByRouteStopDto) {
+    return this.priceRepository.findOneBy({ startStop: { id: pickupStopId }, endStop: { id: dropOffStopId } })
+  }
+
   async getPriceByRouteStops({ pickupStopId, dropOffStopId }: GetPriceByRouteStopDto) {
     const pickupStop = await this.routeStopRepository.findOneBy({ id: pickupStopId })
     const dropOffStop = await this.routeStopRepository.findOneBy({ id: dropOffStopId })

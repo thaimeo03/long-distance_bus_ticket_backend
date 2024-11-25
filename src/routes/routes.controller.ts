@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { RoutesService } from './routes.service'
 import { CreateRouteDetailsDto } from './dto/create-route-details.dto'
 import { ResponseData } from 'common/core/response-success.dto'
@@ -12,5 +12,12 @@ export class RoutesController {
     const data = await this.routesService.createRouteDetails(createRouteDetailsDto)
 
     return new ResponseData({ message: 'Create route successfully', data })
+  }
+
+  @Get('details')
+  async getAllRouteDetails() {
+    const data = await this.routesService.getAllRouteDetails()
+
+    return new ResponseData({ message: 'Get route details successfully', data })
   }
 }

@@ -48,4 +48,39 @@ export class RoutesService {
       }
     }
   }
+
+  async getAllRouteDetails() {
+    const routesWithStops = await this.routeRepository.find({
+      relations: ['routeStops'],
+      order: {
+        routeStops: {
+          distanceFromStartKm: 'ASC'
+        }
+      }
+    })
+
+    const combinedPrices = await Promise.all(
+      routesWithStops.map(async (route) => {
+        return {
+          ...route,
+          routeStops: await Promise.all(
+            route.routeStops.map(async (routeStop, i) => ({
+              ...routeStop,
+              priceToNextStop:
+                i !== route.routeStops.length - 1
+                  ? await this.pricesService
+                      .getPrice({
+                        pickupStopId: route.routeStops[i].id,
+                        dropOffStopId: route.routeStops[i + 1].id
+                      })
+                      .then((price) => Number(price.price))
+                  : null
+            }))
+          )
+        }
+      })
+    )
+
+    return combinedPrices
+  }
 }
