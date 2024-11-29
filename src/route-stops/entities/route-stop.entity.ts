@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, Index } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm'
 import { Schedule } from 'src/schedules/entities/schedule.entity'
 import { Route } from 'src/routes/entities/route.entity'
 import { Booking } from 'src/bookings/entities/booking.entity'
@@ -10,7 +10,6 @@ export class RouteStop {
   id: string
 
   @Column({ type: 'varchar' })
-  @Index({ unique: true })
   location: string
 
   @Column({ type: 'integer' })

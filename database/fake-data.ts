@@ -28,9 +28,9 @@ export class DataService {
   async seedData() {
     this.logger.warn('Seeding data...')
 
-    const ROUTES_QUANTITY = 50
+    const ROUTES_QUANTITY = 5
     const BUS_COMPANIES_QUANTITY = 5
-    const BUS_QUANTITY = 120
+    const BUS_QUANTITY = 2
 
     // seed routes
     let routes: Route[] = await this.routeRepository.find()
@@ -79,11 +79,13 @@ export class DataService {
 
   async seedRoutes(quantity: number) {
     const routes: Route[] = []
+    const startLocations = ['Thái Bình', 'Nam Định']
+    const endLocations = ['Hà Nội']
 
     // two-way
     while (quantity--) {
-      const startLocation = fakerVI.location.state()
-      const endLocation = fakerVI.location.state()
+      const startLocation = fakerVI.helpers.arrayElement(startLocations)
+      const endLocation = fakerVI.helpers.arrayElement(endLocations)
 
       const existedRoute = await this.routeRepository.findOneBy({
         startLocation: startLocation,
@@ -121,11 +123,20 @@ export class DataService {
 
   async seedRouteStops(routes: Route[]) {
     const routeStops: RouteStop[] = []
+    const arrivalTimeStartDepartures = [
+      new Date('2024-12-08 5:00:00'),
+      new Date('2024-12-08 8:00:00'),
+      new Date('2024-12-08 10:00:00'),
+      new Date('2024-12-08 13:00:00'),
+      new Date('2024-12-08 16:00:00'),
+      new Date('2024-12-08 19:00:00'),
+      new Date('2024-12-08 22:00:00')
+    ]
 
     for (const route of routes) {
       // Start location
       const startLocationDeparture = fakerVI.location.streetAddress() + ', ' + route.startLocation
-      const arrivalTimeStartDeparture = fakerVI.date.future()
+      const arrivalTimeStartDeparture = fakerVI.helpers.arrayElement(arrivalTimeStartDepartures)
       const quantityInBetween = fakerVI.number.int({ min: 1, max: 4 })
 
       routeStops.push(
