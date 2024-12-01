@@ -35,7 +35,7 @@ export class UsersService {
     let user = await this.userRepository.findOneBy({ email: registerDto.email })
 
     if (user && !user.isDraft) {
-      throw new BadRequestException('Email already exists')
+      throw new BadRequestException('Email đã tồn tại')
     }
 
     // 2
@@ -84,11 +84,11 @@ export class UsersService {
       email: loginDto.email
     })
 
-    if (!user || user.isDraft) throw new BadRequestException('Email or password is incorrect')
+    if (!user || user.isDraft) throw new BadRequestException('Email hoặc mật khẩu không đúng')
 
     // 2
     const isMatch = await bcrypt.compare(loginDto.password, user.passwordHashed)
-    if (!isMatch) throw new BadRequestException('Email or password is incorrect')
+    if (!isMatch) throw new BadRequestException('Email hoặc mật khẩu không đúng')
 
     // 3
     const { accessToken, refreshToken } = await this.authService.generateToken(user.id)
@@ -118,7 +118,7 @@ export class UsersService {
       }
     })
 
-    if (!user) throw new NotFoundException('User not found')
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng')
 
     return user
   }
@@ -136,7 +136,7 @@ export class UsersService {
   // 2. Update user
   async updateProfile({ userId, updateUserDto }: { userId: string; updateUserDto: UpdateUserDto }) {
     const user = await this.userRepository.findOneBy({ id: userId })
-    if (!user) throw new NotFoundException('User not found')
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng')
 
     await this.userRepository.update(
       { id: userId },
@@ -155,7 +155,7 @@ export class UsersService {
   async forgotPassword(email: string) {
     // 1
     const user = await this.userRepository.findOneBy({ email })
-    if (!user) throw new NotFoundException('Account is not exist')
+    if (!user) throw new NotFoundException('Tài khoản không tồn tại')
 
     // 2
     const OTP = Math.floor(100000 + Math.random() * 900000).toString()
@@ -179,15 +179,15 @@ export class UsersService {
     // 1
     const { email, OTP } = verifyForgotPasswordOTPDto
     const user = await this.userRepository.findOneBy({ email })
-    if (!user) throw new NotFoundException('Account is not exist')
+    if (!user) throw new NotFoundException('Tài khoản không tồn tại')
 
     // 2
     const KEY1 = `${email}-forgot-password-otp`
     const hashedOTP = await this.cacheManager.get<string>(KEY1)
-    if (!hashedOTP) throw new UnauthorizedException('OTP expired')
+    if (!hashedOTP) throw new UnauthorizedException('OTP đã hết hạn')
 
     const isMatch = await bcrypt.compare(OTP, hashedOTP)
-    if (!isMatch) throw new UnauthorizedException('OTP is invalid')
+    if (!isMatch) throw new UnauthorizedException('OTP không hợp lệ')
 
     // 3
     const KEY2 = `${email}-forgot-password-otp-status`
@@ -205,12 +205,12 @@ export class UsersService {
     // 1
     const { email, newPassword } = resetPasswordDto
     const user = await this.userRepository.findOneBy({ email })
-    if (!user) throw new NotFoundException('Account is not exist')
+    if (!user) throw new NotFoundException('Tài khoản không tồn tại')
 
     // 2
     const KEY = `${email}-forgot-password-otp-status`
     const OTPStatus = await this.cacheManager.get<boolean>(KEY)
-    if (!OTPStatus) throw new UnauthorizedException('OTP expired')
+    if (!OTPStatus) throw new UnauthorizedException('OTP đã hết hạn')
 
     // 3
     const hashedPassword = await bcrypt.hash(newPassword, 10)

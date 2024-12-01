@@ -34,7 +34,7 @@ export class StripeStrategy implements PaymentStrategy {
       }
     })
     if (!booking) {
-      throw new NotFoundException('Booking not found')
+      throw new NotFoundException('Không tìm thấy đặt chỗ')
     }
 
     const priceStripe = await this.addProductCatalogStripe({ bookingId, amount: booking.payment.amount })
@@ -76,7 +76,7 @@ export class StripeStrategy implements PaymentStrategy {
     const session = await stripe.checkout.sessions.retrieve(sessionId)
 
     if (session.payment_status !== 'paid') {
-      throw new BadGatewayException('Payment not paid yet')
+      throw new BadGatewayException('Thanh toán chưa được thanh toán')
     }
     // 2
     await stripe.refunds.create({

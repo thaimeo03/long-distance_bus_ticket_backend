@@ -11,7 +11,7 @@ export class PaymentStrategyFactory {
   async createPaymentStrategy(method: PaymentMethod): Promise<PaymentStrategy> {
     const strategy = PAYMENT_STRATEGIES.get(method)
     if (!strategy) {
-      throw new Error(`Payment method ${method} not supported`)
+      throw new Error(`Phương thức thanh toán ${method} không được hỗ trợ`)
     }
 
     return await this.moduleRef.create(strategy)

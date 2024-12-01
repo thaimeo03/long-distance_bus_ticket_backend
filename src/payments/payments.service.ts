@@ -33,7 +33,7 @@ export class PaymentsService {
     })
 
     if (!payment) {
-      throw new NotFoundException('Payment not found')
+      throw new NotFoundException('Không tìm thấy thanh toán')
     }
     await this.paymentRepository.update({ id: payment.id }, { method: processPaymentDto.method })
 
@@ -57,7 +57,7 @@ export class PaymentsService {
     })
 
     if (!payment) {
-      throw new NotFoundException('Payment not found')
+      throw new NotFoundException('Không tìm thấy thanh toán')
     }
 
     try {

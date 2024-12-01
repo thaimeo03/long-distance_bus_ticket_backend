@@ -42,18 +42,18 @@ export class BookingsService {
 
     // 2
     const schedule = await this.scheduleRepository.findOne({ where: { id: createBookingDto.scheduleId } })
-    if (!schedule) throw new NotFoundException('Schedule not found')
+    if (!schedule) throw new NotFoundException('Không tìm thấy lịch trình')
 
     // 3
     const pickupStop = await this.routeStopRepository.findOne({ where: { id: createBookingDto.pickupStopId } })
-    if (!pickupStop) throw new NotFoundException('Pickup stop not found')
+    if (!pickupStop) throw new NotFoundException('Không tìm thấy điểm đón')
 
     const dropOffStop = await this.routeStopRepository.findOne({ where: { id: createBookingDto.dropOffStopId } })
-    if (!dropOffStop) throw new NotFoundException('Drop off stop not found')
+    if (!dropOffStop) throw new NotFoundException('Không tìm thấy điểm dừng trả khách')
 
     // 4
     if (pickupStop.id === dropOffStop.id)
-      throw new BadRequestException('Pickup stop and drop off stop cannot be the same')
+      throw new BadRequestException('Điểm dừng đón và điểm trả khách không thể giống nhau')
 
     // 5
     const seats = await this.seatsService.bookSeats({ seats: createBookingDto.seats, busId: createBookingDto.busId })
@@ -144,7 +144,7 @@ export class BookingsService {
       }
     })
 
-    if (!bookingInfo) throw new NotFoundException('Booking not found')
+    if (!bookingInfo) throw new NotFoundException('Không tìm thấy đặt chỗ')
 
     return bookingInfo
   }
@@ -169,18 +169,18 @@ export class BookingsService {
       .getOne()
 
     if (!booking) {
-      throw new NotFoundException('Booking not found')
+      throw new NotFoundException('Không tìm thấy đặt chỗ')
     }
 
     if (!booking.payment.paymentStatus) {
-      throw new BadRequestException('Payment is not success')
+      throw new BadRequestException('Thanh toán không thành công')
     }
 
     // 2
     const dueTime = this.configService.get('BOOKING_CANCEL_TIME') // 24 hours
 
     if (booking.schedule.departureTime.getTime() < Date.now() + dueTime * 60 * 60 * 1000) {
-      throw new BadRequestException('Booking is due to be canceled')
+      throw new BadRequestException('Đặt phòng sắp bị hủy')
     }
 
     // 3 and 4
@@ -245,7 +245,7 @@ export class BookingsService {
       }
     })
 
-    if (!bookingInfo) throw new NotFoundException('Booking not found')
+    if (!bookingInfo) throw new NotFoundException('Không tìm thấy đặt chỗ')
 
     const data = bookingInfo.map((booking) => {
       return {

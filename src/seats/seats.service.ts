@@ -14,7 +14,7 @@ export class SeatsService {
   // 1. Check bus exists
   // 2. Check seat is available and update it
   async bookSeats({ seats, busId }: { seats: number[]; busId: string }) {
-    if (seats.length === 0) throw new BadRequestException('No seats selected')
+    if (seats.length === 0) throw new BadRequestException('Không có chỗ ngồi nào được chọn')
 
     const bus = await this.busRepository.findOne({
       where: { id: busId }
@@ -24,7 +24,7 @@ export class SeatsService {
     return await Promise.all(
       seats.map(async (seat) => {
         const seatToUpdate = await this.seatRepository.findOne({ where: { seatNumber: seat, bus } })
-        if (!seatToUpdate || !seatToUpdate.isAvailable) throw new BadRequestException('Seat not available')
+        if (!seatToUpdate || !seatToUpdate.isAvailable) throw new BadRequestException('Chỗ ngồi không có sẵn')
         seatToUpdate.isAvailable = false
         return await this.seatRepository.save(seatToUpdate)
       })
@@ -36,7 +36,7 @@ export class SeatsService {
     const bus = await this.busRepository.findOne({
       where: { id: busId }
     })
-    if (!bus) throw new NotFoundException('Bus not found')
+    if (!bus) throw new NotFoundException('Không tìm thấy xe buýt')
 
     await Promise.all(
       seats.map(async (seat) => {

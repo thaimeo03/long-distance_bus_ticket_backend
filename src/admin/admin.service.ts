@@ -135,11 +135,11 @@ export class AdminService {
     const user = await this.usersRepository.findOneBy({ id })
 
     if (!user) {
-      throw new NotFoundException('User not found')
+      throw new NotFoundException('Không tìm thấy người dùng')
     }
 
     if (user.role === Role.Admin) {
-      throw new ForbiddenException('You can not change the role of a user who is admin')
+      throw new ForbiddenException('Bạn không thể thay đổi vai trò của người dùng là quản trị viên')
     }
 
     await this.usersRepository.update(id, {
