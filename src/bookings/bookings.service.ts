@@ -88,32 +88,32 @@ export class BookingsService {
   // 1. Find all bookings overdue
   // 2. Update seat status and in active payment
   // 3. Remove them
-  @Cron('*/10 * * * * *') // every 10 seconds
-  async removeBookingOverdue() {
-    const TIME_LIMIT = this.configService.get('BOOKING_TIME_LIMIT') || 1 // per minute
+  // @Cron('*/10 * * * * *') // every 10 seconds
+  // async removeBookingOverdue() {
+  //   const TIME_LIMIT = this.configService.get('BOOKING_TIME_LIMIT') || 1 // per minute
 
-    // 1
-    const bookings = await this.bookingRepository
-      .createQueryBuilder('booking')
-      .leftJoinAndSelect('booking.seats', 'seats')
-      .innerJoinAndSelect('booking.schedule', 'schedule')
-      .innerJoinAndSelect('schedule.bus', 'bus')
-      .innerJoinAndSelect('booking.payment', 'payment')
-      .where('payment.paymentStatus = :status', { status: false })
-      .andWhere('booking.bookingDate < :timeLimit', {
-        timeLimit: new Date(Date.now() - TIME_LIMIT * 60 * 1000)
-      })
-      .getMany()
+  //   // 1
+  //   const bookings = await this.bookingRepository
+  //     .createQueryBuilder('booking')
+  //     .leftJoinAndSelect('booking.seats', 'seats')
+  //     .innerJoinAndSelect('booking.schedule', 'schedule')
+  //     .innerJoinAndSelect('schedule.bus', 'bus')
+  //     .innerJoinAndSelect('booking.payment', 'payment')
+  //     .where('payment.paymentStatus = :status', { status: false })
+  //     .andWhere('booking.bookingDate < :timeLimit', {
+  //       timeLimit: new Date(Date.now() - TIME_LIMIT * 60 * 1000)
+  //     })
+  //     .getMany()
 
-    // 2 and 3
-    const removedBookings = await Promise.all(
-      bookings.map(async (booking) => {
-        return await this.removeBooking(booking)
-      })
-    )
+  //   // 2 and 3
+  //   const removedBookings = await Promise.all(
+  //     bookings.map(async (booking) => {
+  //       return await this.removeBooking(booking)
+  //     })
+  //   )
 
-    this.logger.log(`Removed ${removedBookings.length} bookings.`)
-  }
+  //   this.logger.log(`Removed ${removedBookings.length} bookings.`)
+  // }
 
   async getBookingInfo(bookingId: string) {
     const bookingInfo = await this.bookingRepository.findOne({
@@ -210,7 +210,7 @@ export class BookingsService {
 
     const [bookingInfo, count] = await this.bookingRepository.findAndCount({
       relations: ['seats', 'schedule', 'user', 'payment', 'pickupStop', 'dropOffStop', 'schedule.bus'],
-      where: { user: { id: userId }, payment: { paymentStatus: true } },
+      where: { user: { id: userId } },
       skip: (page - 1) * limit,
       take: limit,
       select: {
@@ -219,7 +219,8 @@ export class BookingsService {
         seats: true,
         bookingDate: true,
         payment: {
-          amount: true
+          amount: true,
+          paymentStatus: true
         },
         user: {
           fullName: true,
